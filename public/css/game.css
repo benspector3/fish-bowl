@@ -1,0 +1,42 @@
+body {
+    padding: 10px 20px;
+}
+
+.centered {
+    text-align: center;
+}
+
+#round-info {
+    display: flex;
+}
+
+.right-justified {
+    margin-left: auto;
+}
+
+#turn-info {
+    display: flex;
+    margin-top: 20px;
+}
+
+.name-box {
+    margin-top: 5px;
+    min-height: 50px;
+    vertical-align: 50px;
+    min-width: 100px;
+    border: solid 1px black;
+    background-color: white;
+}
+
+.name-box > h3 {
+    text-align: center;
+}
+
+.middle {
+    flex: auto;
+    text-align: center;
+}
+
+#phrase-area {
+    margin-top: 20px;
+}

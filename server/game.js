@@ -17,13 +17,15 @@ class Game {
             phrasesWon: [],
             activePlayer: 0,
             nextPlayer: 1,
+            score: 0
         } 
         this.blueTeam = {
             name: 'blue',
             playerIds: playerIds.slice(playerIds.length / 2),     // assign second half of players to blue
             phrasesWon: [],
             activePlayer: 0,
-            nextPlayer: 1
+            nextPlayer: 1,
+            score: 0
         }
 
         this.randomTurn();          // When game is created, select red or blue to start, randomly
@@ -34,7 +36,6 @@ class Game {
         this.roundNumber = 0;
 
         this.communityBowl = this.allPhrases.slice();
-        this.activePhrase = this.getNextPhrase();
     }
 
     // called when the host presses the start button from the setup lobby
@@ -43,16 +44,21 @@ class Game {
     // returns a random phrase from the community bowl
     getNextPhrase() {
         var randomI = Math.floor(Math.random() * this.communityBowl.length);
-        return this.communityBowl[randomI];
+        this.activePhrase = this.communityBowl[randomI];
+        return this.activePhrase;
     }
 
-    awardPhraseToTeam(team) {
-        this.teamBowls[team].push(this.activePhrase);
+    awardPhraseToTeam() {
+        this.activeTeam.phrasesWon.push(this.activePhrase);
         this.communityBowl.splice(this.communityBowl.indexOf(this.activePhrase), 1);
-        this.activePhrase = this.getNextPhrase();
+        console.log("red phrases: " + this.redTeam.phrasesWon);
+        console.log("blue phrases: " + this.blueTeam.phrasesWon);
+        console.log("phrases left: " + this.communityBowl);
+        this.changeActivePlayer();
     }
 
-    changeActivePlayer(team) {
+    changeActivePlayer() {
+        let team = this.activeTeam;
         team.activePlayer = (team.activePlayer + 1) % team.playerIds.length
         team.nextPlayer = (team.nextPlayer + 1) % team.playerIds.length
     }
@@ -67,6 +73,13 @@ class Game {
 
     goToNextRound() {
         this.roundNumber++;
+        this.redTeam.score = this.redTeam.phrasesWon.length;
+        this.blueTeam.score = this.blueTeam.phrasesWon.length;
+        
+        this.redTeam.phrasesWon = [];
+        this.blueTeam.phrasesWon = [];
+        
+        this.communityBowl = this.allPhrases.slice();
     }
 
     // 50% red turn, 50% blue turn

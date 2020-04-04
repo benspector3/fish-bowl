@@ -21,7 +21,8 @@ class Room {
         this.password = '' + pass
         this.players = {}
         this.chatHistory = [];
-        this.game = new Game()
+        this.game = new Game();
+        this.view = "setup";
 
         // Add room to room list
         ROOM_LIST[this.room] = this
@@ -52,7 +53,6 @@ class Player {
       this.nickname = tempName
       this.room = room
       this.team = 'undecided'
-      this.role = 'guesser'
       this.timeout = 2100         // # of seconds until kicked for afk (35min)
       this.afktimer = this.timeout
   
@@ -79,54 +79,94 @@ io.on('connection', function(socket) {
 
     // Lobby
     //////////////////////////////////////////////////
-    
+
     // Room Creation. Called when client attempts to create a rooom
     // Data: player nickname, room name, room password
     socket.on('createRoom', (data) => { createRoom(socket, data) });
-    
     // Room Joining. Called when client attempts to join a room
     // Data: player nickname, room name, room password
     socket.on('joinRoom', (data) => { joinRoom(socket, data) });
-    
     // Room Leaving. Called when client leaves a room
     socket.on('leaveRoom', () => { leaveRoom(socket) });
-    
     // whenever someone disconnects...
     socket.on('disconnect', () => { socketDisconnect(socket) });
 
-    // In Room
-    ////////////////////////////////////////////////////
+    // In Room Lobby
+    ///////////////////////////////////////////////////////////////////////
 
     socket.on("phrase added", (phrase) => { addPhraseToGame(socket, phrase) });
     socket.on("phrase removed", (phrase) => { removePhraseFromGame(socket, phrase) });
     socket.on("start game", () => { startGame(socket) });
+    
+    // In Game
+    ////////////////////////////////////////////////////////////////////////
+    // clue giver controls 
+    socket.on('show phrase', () => { showNextPhrase(socket) });
+    socket.on('phrase correct', () => { awardPhrase(socket) });
 
     // send chat messages
     socket.on('chat message', (data) => { sendMessage(socket, data); });
 
     // Helper Functions
-    ////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////
+
+    function awardPhrase(socket) {
+        if (!PLAYER_LIST[socket.id]) return // Prevent Crash
+        let roomObj = ROOM_LIST[PLAYER_LIST[socket.id].room]  // Get the room that the client called from
+        let game = roomObj.game;
+        let phrase = game.activePhrase;
+        game.awardPhraseToTeam();
+
+        if (game.communityBowl.length === 0) {
+            // round is over
+            game.goToNextRound();  
+            emitToRoom(roomObj, 'switch rounds', game); 
+        }
+
+        else if (game.timer === 0) {
+            game.switchTurn();
+            emitToRoom(roomObj, 'switch turns', game)
+        }
+
+        else {
+            emitToRoom(roomObj, 'new active player', game);
+            emitToRoom(roomObj, "award phrase response", {
+                phrase: phrase,
+                game: game,
+                players: roomObj.players
+            });
+        }
+
+    }
+
+    function showNextPhrase(socket) {
+        if (!PLAYER_LIST[socket.id]) return // Prevent Crash
+        let roomObj = ROOM_LIST[PLAYER_LIST[socket.id].room]  // Get the room that the client called from
+        let game = roomObj.game;
+        let phrase = game.getNextPhrase();      // Make a new game for that room
+        socket.emit('show phrase response', {phrase: phrase});
+
+        emitToRoom(roomObj, "start timer", {});
+    }
 
     // Gets client that requested the new game and begins the game for the room
     function startGame(socket) {
         if (!PLAYER_LIST[socket.id]) return // Prevent Crash
-        let room = PLAYER_LIST[socket.id].room  // Get the room that the client called from
-        let playerIds = Object.keys(ROOM_LIST[room].players);
+        let roomObj = ROOM_LIST[PLAYER_LIST[socket.id].room]; // Get the room that the client called from
+        let playerIds = Object.keys(roomObj.players);
         
         if (playerIds.length < 4) { // prevent games with less than 4 players from starting
-            socket.emit("newGameResponse", {success: false, msg:"You must have at least 4 players in the room to begin"})
+            socket.emit("new game response", {success: false, msg:"You must have at least 4 players in the room to begin"})
             return;
         }
         
-        ROOM_LIST[room].game.init(playerIds);      // Make a new game for that room
-
+        roomObj.game.init(playerIds);      // Make a new game for that room
+        let team = roomObj.game.activeTeam;
+        console.log("clue giver: " + team.playerIds[team.activePlayer])
         // Make everyone in the room a guesser and tell their client the game is new
-        for(let player in ROOM_LIST[room].players){
-            PLAYER_LIST[player].role = 'guesser';
-            SOCKET_LIST[player].emit('switchRoleResponse', {success:true, role:'guesser'})
-            SOCKET_LIST[player].emit('newGameResponse', {success:true})
-        }
-        gameUpdate(room) // Update everyone in the room
+        emitToRoom(roomObj, 'new game response', {success:true});
+        emitToRoom(roomObj, 'new active player', roomObj.game);
+        gameUpdate(roomObj) // Update everyone in the room
     }
 
     function addPhraseToGame(socket, phrase) {
@@ -149,25 +189,19 @@ io.on('connection', function(socket) {
             message: message,
             nickname: player.nickname
         }
-        let room = player.room;
-        ROOM_LIST[room].chatHistory.push(data);
-        for (let player in ROOM_LIST[room].players){ // For everyone in the passed room
-            SOCKET_LIST[player].emit('chat message', data)  // Pass data to the client
-        }
+        let roomObj = ROOM_LIST[player.room];
+        roomObj.chatHistory.push(data);
+        emitToRoom(roomObj, 'chat message', data);
     }
     
     // Update the gamestate for every client in the room that is passed to this function
-    function gameUpdate(room){
+    function gameUpdate(roomObj){
         // Create data package to send to the client
         let gameState = {
-            room: room,
-            players: ROOM_LIST[room].players,
-            game: ROOM_LIST[room].game,
+            players: roomObj.players,
+            game: roomObj.game,
         }
-        for (let player in ROOM_LIST[room].players){ // For everyone in the passed room
-            gameState.team = PLAYER_LIST[player].team  // Add specific clients team info
-            SOCKET_LIST[player].emit('gameState', gameState)  // Pass data to the client
-        }
+        emitToRoom(roomObj, 'game state', gameState);
     }
     
     // If the number of players in the room is 0 at this point, delete the room entirely
@@ -191,23 +225,19 @@ io.on('connection', function(socket) {
         if (ROOM_LIST[roomName]) {   // If the requested room name is taken
             // Tell the client the room arleady exists
             socket.emit('createResponse', {success:false, msg:'Room Already Exists'})
-        } else {
-            if (roomName === "") {    
-                // Tell the client they need a valid room name
-                socket.emit('createResponse', {success:false, msg:'Enter A Valid Room Name'})
-            } else {
-                if (userName === ''){
-                    // Tell the client they need a valid nickname
-                    socket.emit('createResponse', {success:false, msg:'Enter A Valid Nickname'})
-                } else {    // If the room name and nickname are both valid, proceed
-                    new Room(roomName, passName)                          // Create a new room
-                    let player = new Player(userName, roomName, socket)   // Create a new player
-                    ROOM_LIST[roomName].players[socket.id] = player       // Add player to room
-                    socket.emit('createResponse', {success:true, msg: ""})// Tell client creation was successful
-                    // Server Log
-                    console.log(socket.id + "(" + player.nickname + ") CREATED '" + ROOM_LIST[player.room].room + "'(" + Object.keys(ROOM_LIST[player.room].players).length + ")")
-                }
-            }
+        } else if (roomName === "") {    
+            // Tell the client they need a valid room name
+            socket.emit('createResponse', {success:false, msg:'Enter A Valid Room Name'})
+        } else if (userName === ''){
+            // Tell the client they need a valid nickname
+            socket.emit('createResponse', {success:false, msg:'Enter A Valid Nickname'})
+        } else {    // If the room name and nickname are both valid, proceed
+            new Room(roomName, passName)                          // Create a new room
+            let player = new Player(userName, roomName, socket)   // Create a new player
+            ROOM_LIST[roomName].players[socket.id] = player       // Add player to room
+            socket.emit('createResponse', {success:true, msg: ""})// Tell client creation was successful
+            // Server Log
+            console.log(socket.id + "(" + player.nickname + ") CREATED '" + ROOM_LIST[player.room].room + "'(" + Object.keys(ROOM_LIST[player.room].players).length + ")")
         }
     }
 
@@ -218,27 +248,28 @@ io.on('connection', function(socket) {
         let roomName = data.room.trim()     // Trim whitespace from room name
         let pass = data.password.trim()     // Trim whitespace from password
         let userName = data.nickname.trim() // Trim whitespace from nickname
-    
-        if (!ROOM_LIST[roomName]){
+        let roomObj = ROOM_LIST[roomName];
+
+        if (!roomObj){
             // Tell client the room doesnt exist
             socket.emit('joinResponse', {success:false, msg:"Room Not Found"})
-        } else {
-        if (ROOM_LIST[roomName].password !== pass){ 
+        } else if (roomObj.password !== pass){ 
             // Tell client the password is incorrect
             socket.emit('joinResponse', {success:false, msg:"Incorrect Password"})
-        } else {
-            if (userName === ''){
-                // Tell client they need a valid nickname
-                socket.emit('joinResponse', {success:false, msg:'Enter A Valid Nickname'})
-            } else {  // If the room exists and the password / nickname are valid, proceed
-                let player = new Player(userName, roomName, socket)   // Create a new player
-                ROOM_LIST[roomName].players[socket.id] = player       // Add player to room
-                socket.emit('joinResponse', {success:true, msg:""})   // Tell client join was successful
-                socket.emit('chat history', ROOM_LIST[roomName].chatHistory);
-                // Server Log
-                console.log(socket.id + "(" + player.nickname + ") JOINED '" + ROOM_LIST[player.room].room + "'(" + Object.keys(ROOM_LIST[player.room].players).length + ")")
+        } else if (userName === ''){
+            // Tell client they need a valid nickname
+            socket.emit('joinResponse', {success:false, msg:'Enter A Valid Nickname'})
+        } else {  // If the room exists and the password / nickname are valid, proceed
+            let player = new Player(userName, roomName, socket)   // Create a new player
+            
+            if (roomObj.view === "game") {
+                socket.emit("new game response", {success: true, msg:""})
             }
-        }
+            roomObj.players[socket.id] = player       // Add player to room
+            socket.emit('joinResponse', {success:true, msg:""})   // Tell client join was successful
+            socket.emit('chat history', roomObj.chatHistory);
+            // Server Log
+            console.log(socket.id + "(" + player.nickname + ") JOINED '" + ROOM_LIST[player.room].room + "'(" + Object.keys(ROOM_LIST[player.room].players).length + ")")
         }
     }
 
@@ -274,6 +305,12 @@ io.on('connection', function(socket) {
         }
         // Server Log
         console.log('DISCONNECT: ' + socket.id)
+    }
+
+    function emitToRoom(roomObj, emitMessage, data) {
+        for (let player in roomObj.players){ // For everyone in the passed room
+            SOCKET_LIST[player].emit(emitMessage, data)  // Pass data to the client
+        }
     }
     
 })

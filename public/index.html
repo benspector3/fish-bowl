@@ -5,8 +5,8 @@
         <script src="/socket.io/socket.io.js"></script>
         <link rel="stylesheet" type="text/css" href="css/chat.css">
         <link rel="stylesheet" type="text/css" href="css/lobby.css">
+        <link rel="stylesheet" type="text/css" href="css/game.css">
         <!-- <link rel="stylesheet" type="text/css" href="css/style.css"> -->
-        <!-- <link rel="stylesheet" type="text/css" href="css/game.css"> -->
         <script
   src="https://code.jquery.com/jquery-3.4.1.js"
   integrity="sha256-WpOohJOqMqqyKL9FccASB9O0KwACQJpFTUBLTYOVvVU="
@@ -59,24 +59,41 @@
         </div>
 
         <div id="game" style="display:none"> 
-            <h1 id="timer"></h1>
+            <h1 id="timer" class='centered'>2:00</h1>
             <div id="round-info">
-                <h2 id="round-name"></h2>
-                <h2 id="phrases-left"></h2>
-                <h2 id="team-turn"></h2>
-                <h2 id="clue-giver-name"></h2>
-                <h2 id="clue-giver-next"></h2>
+                <div class='left-justified'>
+                    <h3 id="round-name"></h3>
+                </div>
+                <div class='right-justified'>
+                    <h3 id="phrases-left"></h3>
+                </div>
             </div>
-            <div id="game-controls-container">
-                <form id="next-phrase-form" action="">
-                    <button>Next Phrase</button>
-                </form>
-                <form id="correct-form" action="">
-                    <button>Correct</button>
-                </form>
-            </div>
-            <div id="phrase-area">
-                <h1 id='phrase'></h1>
+            <div id="turn-info"> 
+                <div class='left-justified'>
+                    <h3 class='centered'>Clue Giver:</h3>
+                    <div class="name-box">
+                        <h3 id="clue-giver-name"></h3>
+                    </div>
+                </div>
+                <div class='middle'>
+                    <div id="game-controls-container" style='display:none'>
+                        <form id="show-phrase-form" action="">
+                            <button id='show-phrase-button'>Show Phrase</button>
+                        </form>
+                        <form id="correct-form" action="">
+                            <button id='correct-button' style='display:none'>Correct</button>
+                        </form>
+                    </div>
+                    <div id="phrase-area">
+                        <h3 id='phrase'></h1>
+                    </div>
+                </div>
+                <div class='right-justified'>
+                    <h3 class='centered'>Up Next:</h3>
+                    <div class='name-box'>
+                        <h3 id="clue-giver-next"></h3>
+                    </div>
+                </div>
             </div>
         </div>
     </body>
