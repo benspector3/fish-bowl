@@ -1,0 +1,16 @@
+{
+  "name": "socket-io-chatapp",
+  "version": "1.0.0",
+  "description": "tutorial project for socket io express nodejs app",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node app.js"
+  },
+  "author": "Ben Spector",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.17.1",
+    "socket.io": "^2.3.0"
+  }
+}

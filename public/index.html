@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Socket.io Chat App</title>
+        <script src="/socket.io/socket.io.js"></script>
+        <link rel="stylesheet" type="text/css" href="css/chat.css">
+        <link rel="stylesheet" type="text/css" href="css/lobby.css">
+        <!-- <link rel="stylesheet" type="text/css" href="css/style.css"> -->
+        <!-- <link rel="stylesheet" type="text/css" href="css/game.css"> -->
+        <script
+  src="https://code.jquery.com/jquery-3.4.1.js"
+  integrity="sha256-WpOohJOqMqqyKL9FccASB9O0KwACQJpFTUBLTYOVvVU="
+  crossorigin="anonymous"></script>
+    </head>
+    <body>
+        <div id="join-game">
+            <h1>Fish Bowl</h1>
+            <form>
+              <div class='join-input'>
+                <label for='join-nickname'>Nickname: </label>
+                <input id='join-nickname' type='text' maxlength="10"></input>
+              </div>
+              <div class='join-input'>
+                <label for='join-room'>Room: </label>
+                <input id='join-room' type='text' maxlength="10"></input>
+              </div>
+              <div class='join-input'>
+                <label for='join-password'>Password: </label>
+                <input id='join-password' type='password' maxlength="20"></input>
+              </div>
+            </form>
+            <p id='error-message'> </p>
+            <button id='join-enter'>Enter Room</button>
+            <button id='join-create'>Create Room</button>
+        </div>
+
+        <div id="room-lobby" style="display:none">
+            <button id="leave-room">Leave Room</button>
+            <button id="start-game" style="display:none">Start Game</button>
+            
+            <ul id="phrases-added">
+                    
+            </ul>
+            <form id="phrase-form" action="">
+                <input id="phrase-input" autocomplete="off" />
+                <button>Add Phrase</button>
+            </form>
+
+
+            <div id="chat" style='display:none'>
+                <ul id="messages">
+                    
+                </ul>
+                <form id="chat-form" action="">
+                    <input id="chat-input" autocomplete="off" />
+                    <button>Send</button>
+                </form>
+            </div>
+        </div>
+
+        <div id="game" style="display:none"> 
+            <h1 id="timer"></h1>
+            <div id="round-info">
+                <h2 id="round-name"></h2>
+                <h2 id="phrases-left"></h2>
+                <h2 id="team-turn"></h2>
+                <h2 id="clue-giver-name"></h2>
+                <h2 id="clue-giver-next"></h2>
+            </div>
+            <div id="game-controls-container">
+                <form id="next-phrase-form" action="">
+                    <button>Next Phrase</button>
+                </form>
+                <form id="correct-form" action="">
+                    <button>Correct</button>
+                </form>
+            </div>
+            <div id="phrase-area">
+                <h1 id='phrase'></h1>
+            </div>
+        </div>
+    </body>
+    <script language="javascript" type="text/javascript" src="/js/fishbowl.js"></script>
+</html>
