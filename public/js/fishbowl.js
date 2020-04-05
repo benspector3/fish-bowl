@@ -1,9 +1,12 @@
 $(document).ready(function() {
     let socket = io();
+    const COLORS = {
+        BLUE: "#048cff",
+        RED: "#f70d2d"
+    }
 
     // Lobby Page Elements
     ////////////////////////////////////////////////////
-    let $body = $("body");
     // Divs
     let $joinDiv = $('#join-game')
     let $joinErrorMessage = $('#error-message')
@@ -31,12 +34,14 @@ $(document).ready(function() {
 
     // Game Elements
     let $gameDiv = $("#game");
+    let $team = $("#team");
     let $timer = $("#timer");
-    let $roundInfoDiv = $("#round-info");
     let $roundName = $("#round-name");
     let $phrasesLeft = $("#phrases-left");
-    let $clueGiverName = $("#clue-giver-name");
-    let $clueGiverNext = $("#clue-giver-next");
+    let $redTeam = $("#red-team");
+    let $blueTeam = $("#blue-team");
+    let $clueGiver;
+    let $clientName;
     
     // game controls
     let $gameControls = $("#game-controls-container");
@@ -49,42 +54,50 @@ $(document).ready(function() {
     // init
     ///////////////////////////////////////////////////////////
 
+    let players = {};
+
     // UI Button Handlers
     ////////////////////////////////////////////////////////////////////////////
     
     // User Joins Room
-    $joinEnter.click(() => { socket.emit('joinRoom', getLobbyInputData()) });
+    $joinEnter.click(() => { 
+        var lobbyData = getLobbyInputData();
+        socket.emit('joinRoom', lobbyData); 
+    });
     // User Creates Room
-    $joinCreate.click(() => { socket.emit('createRoom', getLobbyInputData()) });
+    $joinCreate.click(() => { 
+        var lobbyData = getLobbyInputData();
+        socket.emit('createRoom', lobbyData) 
+    });
     // User Leaves Room
-    $leaveRoom.click(() => { socket.emit('leaveRoom', {}) });
+    $leaveRoom.click(() => { 
+        socket.emit('leaveRoom', {});
+    });
 
     $phraseForm.submit(addPhrase);
 
     $chatForm.submit((e) => {
         e.preventDefault(); // prevent the page from reloading
-        socket.emit("chat message", $chatInput.val()); // send the server the chat mesasge
+        socket.emit("chatMessage", $chatInput.val()); // send the server the chat mesasge
         $chatInput.val(''); // empty the input field
         return false;
     }); 
     
     $startGame.click((e) => {
         e.preventDefault(); // prevent the page from reloading
-        socket.emit('start game');
+        socket.emit('startGame');
         return false;
     });  
     $showPhraseForm.submit((e) => {
         e.preventDefault();
 
         if ($phrase.text() === "") {    // only emit if the phrase is not being shown
-            socket.emit("show phrase", {} );
+            socket.emit("showPhraseButtonPressed", {} );
         }
-        $showPhraseButton.hide();
-        $correctButton.show();
     });
     $correctForm.submit((e) => {
         e.preventDefault();
-        socket.emit("phrase correct", {})
+        socket.emit("phraseCorrectButtonPressed", {});
     });
 
     
@@ -97,25 +110,47 @@ $(document).ready(function() {
     socket.on('createResponse', (data) => { enterRoomLobbyView(data, true) });
     // Response to leaving room
     socket.on('leaveResponse', (data) => { leaveRoomLobbyView(data) });
+    // Another user joins or leaves the room
+    socket.on('updatePlayerList', updatePlayerList);
 
-    socket.on('game state', handleGameStateUpdate);
+    // game events
+    socket.on('newGameResponse', handleNewGameResponse);
+    socket.on('gameState', handleGameStateUpdate);
+    socket.on('advanceToNextRound', handleAdvanceToNextRound)
+    socket.on('switchingTurns', handleSwitchingTurns);
 
-    socket.on('new game response', handleNewGameResponse);
-    socket.on('new active player', showActivePlayerControls);
+    socket.on('newActivePlayer', showActivePlayerControls);
 
-    socket.on('show phrase response', showPhrase );
-    socket.on('award phrase response', handleAwardPhraseResponse );
-    socket.on('start timer', updateTimer);
+    socket.on('showPhraseResponse', handleShowPhraseResponse );
+    socket.on('awardPhraseResponse', handleAwardPhraseResponse );
+    
+    socket.on('timerUpdate', updateTimer);
 
-    socket.on('chat message', receiveChat);
-    socket.on('chat history', updateChat);
+    socket.on('chatMessage', receiveChat);
+    socket.on('chatHistory', updateChat);
 
     // Helper Functions
     ////////////////////////////////////////////////////////////////
-    
+
+    function handleSwitchingTurns(game) {
+        console.log("switching turns", game);
+        //
+        updateInfo(game);
+    }
+
+    function handleAdvanceToNextRound(game) {
+        console.log('next round', game);
+        updateInfo(game);
+    }
+
     // data: phrase, game
     function handleAwardPhraseResponse(data) {
-        updateInfo(data.game, data.players);
+        // only show the "show phrase" button if there are phrases left in the bowl
+        if (data.game.communityBowl.length > 0) {
+            $showPhraseButton.show();
+        }
+        
+        updateInfo(data.game);
     }
 
     // data: room, players, game
@@ -129,19 +164,25 @@ $(document).ready(function() {
 
     function showActivePlayerControls(game) {
         console.log(game);
-        let team = game.activeTeam;
+        
+        $phrase.text("");
+
+        let team = game[game.activeTeam];
         let id = team.playerIds[team.activePlayer];
         if (id === socket.id) {
             $gameControls.show();
+            $showPhraseButton.show();
         } else {
             $gameControls.hide();
-            $phrase.hide();
+            $correctButton.hide();
         }
     }
 
-    function showPhrase(data) {
+    function handleShowPhraseResponse(data) {
+        console.log("showing phrase");
+        $showPhraseButton.hide();
+        $correctButton.show();
         $phrase.text(data.phrase);
-        $phrase.show();
     }
 
     // chatHistory: Array of chatData Objects
@@ -159,36 +200,58 @@ $(document).ready(function() {
     }
 
     function handleGameStateUpdate(data) {           // Response to gamestate update
-        updateInfo(data.game, data.players)      // Update the games turn information
-        updateTimer(data.game)          // Update the games timer slider
-        updatePlayerList(data.players)        // Update the player list for the room
+        updateInfo(data.game)     // Update the games turn information
+        // updateTimer(data.game)    // Update the games timer slider
     }
 
-    function updateInfo(game, players) {
+    function updateInfo(game) {
+        // display round name and phrases remaining
         $roundName.text(capitalize(game.roundNames[game.roundNumber]));     // show the game mode
         $phrasesLeft.text(game.communityBowl.length + " / " + game.allPhrases.length);
         
-        let team = game.activeTeam; 
-        if (team.name === "blue") {
-            $body.css("background-color", "#048cff");
-        } else {
-            $body.css("background-color", "#f70d2d");
-        }
+        // change background to match active team color
+        let team = game[game.activeTeam]; 
+        $team.text(team.name + "'s turn")
+            .css("color", COLORS[team.name.toUpperCase()]);
+        
+        // update red team roster
+        $redTeam.empty();
+        game.redTeam.playerIds.forEach((playerId) => {
+            addPlayerToTeam(playerId, $redTeam);
+        });
 
-        $clueGiverName.text(players[team.playerIds[team.activePlayer]].nickname);
-        $clueGiverNext.text(players[team.playerIds[team.nextPlayer]].nickname);
+        // update blue team roster
+        $blueTeam.empty();
+        game.blueTeam.playerIds.forEach((playerId) => {
+            addPlayerToTeam(playerId, $blueTeam);
+        });
+
+        // add (you) indicator next to client name
+        $clientName = $("#"+socket.id);
+        $clientName.text($clientName.text() + "(you)"); // add a star to client's name
+
+        // add star and bold to clue giver
+        $clueGiver = $("#"+team.playerIds[team.activePlayer]);
+        $clueGiver.addClass("clue-giver");
+        $clueGiver.text($clueGiver.text() + "*"); // add a star to client's name
+
+        console.log('update game state', game);
+    }
+
+    function addPlayerToTeam(playerId, $teamDiv) {
+        let name = players[playerId].nickname;
+            $("<p>").attr('id', playerId)
+                .text(name)
+                .appendTo($teamDiv);
     }
     
-    function updateTimer(game) {
+    function updateTimer(data) {
         // update client side timer
+        $timer.text(data.timer);
     }
 
-    function updatePlayerList(players) {
-        // Create a li element for each player
-        // If player is the clue giver, put brackets around their name
-        // add player to their team's UL
-    }
-
+    // Switching Views
+    ////////////////////////////////////////////////////////////////////////
     function enterGameView(data) {
         $roomLobbyDiv.hide();
         $gameDiv.show();
@@ -224,30 +287,42 @@ $(document).ready(function() {
         }
     }
 
+    // Room Lobby
+    ////////////////////////////////////////////////////////////////////////////
+
+    function updatePlayerList(data) {
+        // TODO
+        // Create a li element for each player
+        // If player is the clue giver, put brackets around their name
+        // add player to their team's UL
+        players = data;
+        console.log(players);
+    }
+
     function addPhrase(e) {
         e.preventDefault(); // prevent the page from reloading
         
-        let phrase = $phraseInput.val();        // get the phrase from the input field
-        socket.emit("phrase added", phrase);    // send the server the phrase
-        $phraseInput.val('');   // empty the input field
+        let phrase = $phraseInput.val().trim();     // get the phrase from the input field and remove whitespace
+        if (!phrase) { return false }               // prevent blank phrases
         
         // append the phrase to the list of phrases in the DOM
         var $li = $("<li>").appendTo("#phrases-added")
-        $("<span>").addClass('remove-phrase')
-                .text("[X]")
-                .appendTo($li)
-                .click(() => { 
-                    $li.remove();
-                    socket.emit("phrase removed", phrase);    // send the server the phrase
-                 });
-        
-        $("<p>").appendTo($li).text(phrase).css({
-            "display": "inline",
-            "margin-left": 3
+        $("<p>").appendTo($li).text(phrase);
+        $("<button>").addClass('remove-phrase')
+        .text("X")
+        .appendTo($li)
+        .click(() => { 
+            $li.remove();
+            socket.emit("phraseRemoved", phrase);    // send the server the phrase
         });
+        
+        $phraseInput.val('');                       // empty the input field
+        socket.emit("phraseAdded", phrase);         // send the server the phrase
         return false;
     }
 
+    // Utility Functions
+    //////////////////////////////////////////////////////////////////////////////
     function capitalize(str) {
         return str[0].toUpperCase() + str.slice(1);
     }

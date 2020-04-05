@@ -1,0 +1,14 @@
+/* 
+COLOR_GREEN: #06bb06
+COLOR_BLUE: #048cff
+COLOR_RED: #f70d2d
+*/
+
+#room-lobby { text-align: center;}
+#start-game { background-color: #06bb06; }
+#leave-room { background-color: #f70d2d; }
+#phrase-form { margin: 10px;}
+#phrases-added { width: fit-content; margin: auto; list-style: none }
+#phrases-added > li { text-align: right; margin: 0px 5px; }
+.remove-phrase { width: fit-content; padding: 0px 4px; }
+#phrases-added > li > p { display: inline; margin-right: 3px; }

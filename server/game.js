@@ -1,14 +1,14 @@
 class Game {
     constructor() {
         this.roundNames = ['taboo', 'charades', 'password'];
-        this.timerAmount = 61;
+        this.timerAmount = 10;
         this.allPhrases = [];
         this.communityBowl = [];
         this.alternateClueGiver = false;
     }
 
     // playerIds: socket ids for each team's players
-    init(playerIds) {
+    start(playerIds) {
         this.shuffle(playerIds); // randomize the teams and order of the players
 
         this.redTeam = {
@@ -33,13 +33,20 @@ class Game {
         this.winner = "";           // Winning team
         this.activePhrase = "";     // The phrase currently being displayed to the cluegiver
         this.timer = this.timerAmount;  // Set the timer
+        this.timerRunning = false;
         this.roundNumber = 0;
 
         this.communityBowl = this.allPhrases.slice();
     }
 
     // called when the host presses the start button from the setup lobby
+    startTimer() {
+        this.timerRunning = true;
+    }
 
+    stopTimer() {
+        this.timerRunning = false;
+    }
 
     // returns a random phrase from the community bowl
     getNextPhrase() {
@@ -49,7 +56,7 @@ class Game {
     }
 
     awardPhraseToTeam() {
-        this.activeTeam.phrasesWon.push(this.activePhrase);
+        this[this.activeTeam].phrasesWon.push(this.activePhrase);
         this.communityBowl.splice(this.communityBowl.indexOf(this.activePhrase), 1);
         console.log("red phrases: " + this.redTeam.phrasesWon);
         console.log("blue phrases: " + this.blueTeam.phrasesWon);
@@ -58,7 +65,7 @@ class Game {
     }
 
     changeActivePlayer() {
-        let team = this.activeTeam;
+        let team = this[this.activeTeam];
         team.activePlayer = (team.activePlayer + 1) % team.playerIds.length
         team.nextPlayer = (team.nextPlayer + 1) % team.playerIds.length
     }
@@ -68,14 +75,16 @@ class Game {
     }
 
     removePhrase(phrase) {
-        this.allPhrases.splice(this.allPhrases.indexOf(phrase));
+        var i = this.allPhrases.indexOf(phrase);
+        if (i !== -1) {
+            this.allPhrases.splice(i, 1);
+        }
     }
 
     goToNextRound() {
         this.roundNumber++;
         this.redTeam.score = this.redTeam.phrasesWon.length;
         this.blueTeam.score = this.blueTeam.phrasesWon.length;
-        
         this.redTeam.phrasesWon = [];
         this.blueTeam.phrasesWon = [];
         
@@ -84,13 +93,18 @@ class Game {
 
     // 50% red turn, 50% blue turn
     randomTurn(){
-        this.activeTeam = Math.random() < 0.5 ? this.redTeam : this.blueTeam;
+        this.activeTeam = Math.random() < 0.5 ? 'redTeam' : 'blueTeam';
     }
 
     switchTurn() {
-        this.activeTeam = (this.activeTeam.name === "red") ? this.blueTeam : this.redTeam;
-        this.timer = this.timerAmount;
+        console.log("game.js switching team");
+        this.activeTeam = (this.activeTeam === "blueTeam") ? 'redTeam' : 'blueTeam';
         this.activePhrase = this.getNextPhrase();
+    }
+
+    resetTimer() {
+        this.timer = this.timerAmount;  // reset timer
+        this.stopTimer();
     }
 
     shuffle(array) {

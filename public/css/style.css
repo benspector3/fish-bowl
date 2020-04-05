@@ -1,0 +1,15 @@
+/* 
+COLOR_GREEN: #06bb06
+COLOR_BLUE: #048cff
+COLOR_RED: #f70d2d
+*/
+
+body { padding: 10px 20px; }
+button {
+    width: 70px;
+    height: 20px;
+    border-radius: 3px;
+}
+.centered { text-align: center; }
+.middle { flex: auto; text-align: center; }
+.right-justified { margin-left: auto; }

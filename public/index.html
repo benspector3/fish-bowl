@@ -1,12 +1,13 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>Socket.io Chat App</title>
+        <title>Fish Bowl</title>
         <script src="/socket.io/socket.io.js"></script>
+        <link rel="stylesheet" type="text/css" href="css/style.css">
+        <link rel="stylesheet" type="text/css" href="css/join-game.css">
+        <link rel="stylesheet" type="text/css" href="css/room-lobby.css">
         <link rel="stylesheet" type="text/css" href="css/chat.css">
-        <link rel="stylesheet" type="text/css" href="css/lobby.css">
         <link rel="stylesheet" type="text/css" href="css/game.css">
-        <!-- <link rel="stylesheet" type="text/css" href="css/style.css"> -->
         <script
   src="https://code.jquery.com/jquery-3.4.1.js"
   integrity="sha256-WpOohJOqMqqyKL9FccASB9O0KwACQJpFTUBLTYOVvVU="
@@ -15,37 +16,40 @@
     <body>
         <div id="join-game">
             <h1>Fish Bowl</h1>
-            <form>
-              <div class='join-input'>
-                <label for='join-nickname'>Nickname: </label>
-                <input id='join-nickname' type='text' maxlength="10"></input>
-              </div>
-              <div class='join-input'>
-                <label for='join-room'>Room: </label>
-                <input id='join-room' type='text' maxlength="10"></input>
-              </div>
-              <div class='join-input'>
-                <label for='join-password'>Password: </label>
-                <input id='join-password' type='password' maxlength="20"></input>
-              </div>
-            </form>
+            <div id="join-form-container">
+                <form id="join-form">
+                    <div id='join-labels'>
+                        <label for='join-nickname'>Nickname: </label>
+                        <label for='join-room'>Room: </label>
+                        <label for='join-password'>Password: </label>
+                    </div>
+                    
+                    <div id='join-input'>
+                        <input id='join-nickname' type='text' maxlength="10"></input>
+                        <input id='join-room' type='text' maxlength="10"></input>
+                        <input id='join-password' type='password' maxlength="20"></input>
+                    </div>
+                </form>
+                <div id="join-buttons"> 
+                    <button id='join-enter'>Enter Room</button>
+                    <button id='join-create'>Create Room</button>
+                </div>
+            </div>
             <p id='error-message'> </p>
-            <button id='join-enter'>Enter Room</button>
-            <button id='join-create'>Create Room</button>
-        </div>
+            </div>
 
         <div id="room-lobby" style="display:none">
             <button id="leave-room">Leave Room</button>
             <button id="start-game" style="display:none">Start Game</button>
             
-            <ul id="phrases-added">
-                    
-            </ul>
             <form id="phrase-form" action="">
                 <input id="phrase-input" autocomplete="off" />
                 <button>Add Phrase</button>
             </form>
-
+            
+            <ul id="phrases-added">
+                    
+            </ul>
 
             <div id="chat" style='display:none'>
                 <ul id="messages">
@@ -59,20 +63,21 @@
         </div>
 
         <div id="game" style="display:none"> 
-            <h1 id="timer" class='centered'>2:00</h1>
+            <h2 class='middle'>
+                <span id="team"></span>
+                [<span id="timer">120</span>]
+            </h2>
             <div id="round-info">
-                <div class='left-justified'>
-                    <h3 id="round-name"></h3>
-                </div>
-                <div class='right-justified'>
-                    <h3 id="phrases-left"></h3>
-                </div>
+                <h3 class='left-justified'>
+                    <span id='round-name'></span>
+                    (<span id="phrases-left"></span>)
+                </h3>
             </div>
             <div id="turn-info"> 
                 <div class='left-justified'>
-                    <h3 class='centered'>Clue Giver:</h3>
-                    <div class="name-box">
-                        <h3 id="clue-giver-name"></h3>
+                    <h3 class='middle'>Red Team</h3>
+                    <div id="red-team" class="team-container">
+                        
                     </div>
                 </div>
                 <div class='middle'>
@@ -89,9 +94,9 @@
                     </div>
                 </div>
                 <div class='right-justified'>
-                    <h3 class='centered'>Up Next:</h3>
-                    <div class='name-box'>
-                        <h3 id="clue-giver-next"></h3>
+                    <h3 class='middle'>Blue Team</h3>
+                    <div id="blue-team" class='team-container blue'>
+
                     </div>
                 </div>
             </div>
