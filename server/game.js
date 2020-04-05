@@ -1,14 +1,14 @@
 class Game {
     constructor() {
-        this.roundNames = ['taboo', 'charades', 'password'];
-        this.timerAmount = 10;
+        this.roundNames = ['taboo', 'charades', 'password', 'ghost charades'];
+        this.timerAmount = 91;
         this.allPhrases = [];
         this.communityBowl = [];
         this.alternateClueGiver = false;
     }
 
     // playerIds: socket ids for each team's players
-    start(playerIds) {
+    newGame(playerIds) {
         this.shuffle(playerIds); // randomize the teams and order of the players
 
         this.redTeam = {
@@ -28,6 +28,7 @@ class Game {
             score: 0
         }
 
+        this.bonusRound = false;
         this.randomTurn();          // When game is created, select red or blue to start, randomly
         this.over = false;          // Whether or not the game has been won / lost
         this.winner = "";           // Winning team
@@ -37,6 +38,11 @@ class Game {
         this.roundNumber = 0;
 
         this.communityBowl = this.allPhrases.slice();
+    }
+    
+    endGame() {
+        this.winner = this.blueTeam.score > this.redTeam.score ? "blue" : "red";
+        return this.winner;
     }
 
     // called when the host presses the start button from the setup lobby
@@ -57,6 +63,7 @@ class Game {
 
     awardPhraseToTeam() {
         this[this.activeTeam].phrasesWon.push(this.activePhrase);
+        this[this.activeTeam].score++;
         this.communityBowl.splice(this.communityBowl.indexOf(this.activePhrase), 1);
         console.log("red phrases: " + this.redTeam.phrasesWon);
         console.log("blue phrases: " + this.blueTeam.phrasesWon);
@@ -83,12 +90,15 @@ class Game {
 
     goToNextRound() {
         this.roundNumber++;
-        this.redTeam.score = this.redTeam.phrasesWon.length;
-        this.blueTeam.score = this.blueTeam.phrasesWon.length;
         this.redTeam.phrasesWon = [];
         this.blueTeam.phrasesWon = [];
         
         this.communityBowl = this.allPhrases.slice();
+        
+        let lastRound = this.bonusRound ? this.roundNames.length : this.roundNames.length - 1;
+        if (this.roundNumber === lastRound) {
+            this.over = true;
+        }
     }
 
     // 50% red turn, 50% blue turn

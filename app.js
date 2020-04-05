@@ -136,10 +136,18 @@ function awardPhrase(socket) {
     
     // the round is over. display results and move to next round
     if (game.communityBowl.length === 0) {
-        console.log('advancing to next round');
+
         game.goToNextRound();  
+        console.log('advancing to next round: ' + game.roundNum);
         game.stopTimer();
-        emitToRoom(roomObj, 'advanceToNextRound', game); 
+
+        if (game.over) {
+            game.endGame();
+            emitToRoom(roomObj, 'gameOver', game);
+            return;
+        } else {
+            emitToRoom(roomObj, 'advanceToNextRound', game); 
+        }
     }
     
     // show the next active player the controls
@@ -175,11 +183,11 @@ function startGame(socket) {
         return;
     }
 
-    roomObj.game.start(playerIds);      // Make a new game for that room
+    roomObj.game.newGame(playerIds);      // Make a new game for that room
     
     let team = roomObj.game[roomObj.game.activeTeam];
     // Make everyone in the room a guesser and tell their client the game is new
-    emitToRoom(roomObj, 'newGameResponse', {success:true});
+    emitToRoom(roomObj, 'newGameResponse', {success:true, game: roomObj.game});
     emitToRoom(roomObj, 'newActivePlayer', roomObj.game);
     gameUpdate(roomObj) // Update everyone in the room
     

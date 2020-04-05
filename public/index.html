@@ -63,19 +63,21 @@
         </div>
 
         <div id="game" style="display:none"> 
-            <h2 class='middle'>
-                <span id="team"></span>
-                [<span id="timer">120</span>]
-            </h2>
-            <div id="round-info">
-                <h3 class='left-justified'>
+            <div id="round-info" class='middle'>
+                <h2 class='middle'>
                     <span id='round-name'></span>
                     (<span id="phrases-left"></span>)
-                </h3>
+                </h2>
+                <h2 class='middle'>
+                    <span id="team"></span>
+                    [<span id="timer"></span>]
+                </h2>
+                <h2 id='game-over' class='middle' style='display: none'> </h2>
             </div>
+            
             <div id="turn-info"> 
                 <div class='left-justified'>
-                    <h3 class='middle'>Red Team</h3>
+                    <h3 id='red-team-score' class='middle'>Red Team(0)</h3>
                     <div id="red-team" class="team-container">
                         
                     </div>
@@ -94,7 +96,7 @@
                     </div>
                 </div>
                 <div class='right-justified'>
-                    <h3 class='middle'>Blue Team</h3>
+                    <h3  id='blue-team-score' class='middle'>Blue Team(0)</h3>
                     <div id="blue-team" class='team-container blue'>
 
                     </div>

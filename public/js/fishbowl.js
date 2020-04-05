@@ -38,6 +38,9 @@ $(document).ready(function() {
     let $timer = $("#timer");
     let $roundName = $("#round-name");
     let $phrasesLeft = $("#phrases-left");
+    let $gameOver = $("#game-over");
+    let $redTeamScore = $("#red-team-score");
+    let $blueTeamScore = $("#blue-team-score");
     let $redTeam = $("#red-team");
     let $blueTeam = $("#blue-team");
     let $clueGiver;
@@ -118,6 +121,7 @@ $(document).ready(function() {
     socket.on('gameState', handleGameStateUpdate);
     socket.on('advanceToNextRound', handleAdvanceToNextRound)
     socket.on('switchingTurns', handleSwitchingTurns);
+    socket.on('gameOver', handleGameOver);
 
     socket.on('newActivePlayer', showActivePlayerControls);
 
@@ -132,9 +136,20 @@ $(document).ready(function() {
     // Helper Functions
     ////////////////////////////////////////////////////////////////
 
+    function handleGameOver(game) {
+        console.log("game over!", game);
+        $team.parent().hide();
+        $roundName.parent().hide();
+        $gameControls.hide();
+        $phrase.hide();
+        $gameOver.show();
+        $gameOver.text(game.winner + " team wins!");
+
+    }
+
     function handleSwitchingTurns(game) {
         console.log("switching turns", game);
-        //
+        $timer.text(data.game.timerAmount - 1);
         updateInfo(game);
     }
 
@@ -157,6 +172,7 @@ $(document).ready(function() {
     function handleNewGameResponse(data) {
         if (data.success) {
             enterGameView();
+            $timer.text(data.game.timerAmount - 1);
         } else {
             alert(data.msg);
         }
@@ -214,13 +230,15 @@ $(document).ready(function() {
         $team.text(team.name + "'s turn")
             .css("color", COLORS[team.name.toUpperCase()]);
         
-        // update red team roster
+        // update red team roster and score
+        $redTeamScore.text("Red Team (" + game.redTeam.score + ")");
         $redTeam.empty();
         game.redTeam.playerIds.forEach((playerId) => {
             addPlayerToTeam(playerId, $redTeam);
         });
 
-        // update blue team roster
+        // update blue team roster score
+        $blueTeamScore.text("Blue Team (" + game.blueTeam.score + ")");
         $blueTeam.empty();
         game.blueTeam.playerIds.forEach((playerId) => {
             addPlayerToTeam(playerId, $blueTeam);
