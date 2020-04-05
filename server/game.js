@@ -5,6 +5,7 @@ class Game {
         this.allPhrases = [];
         this.communityBowl = [];
         this.alternateClueGiver = false;
+        this.hasBegun = false;
     }
 
     // playerIds: socket ids for each team's players
@@ -28,6 +29,7 @@ class Game {
             score: 0
         }
 
+        this.hasBegun = true;
         this.bonusRound = false;
         this.randomTurn();          // When game is created, select red or blue to start, randomly
         this.over = false;          // Whether or not the game has been won / lost
@@ -38,6 +40,14 @@ class Game {
         this.roundNumber = 0;
 
         this.communityBowl = this.allPhrases.slice();
+    }
+
+    removePlayer(playerId) {
+        var i = this.blueTeam.playerIds.indexOf(playerId);
+        if (i >= 0) this.blueTeam.playerIds.splice(i, 1);
+
+        i = this.redTeam.playerIds.indexOf(playerId);
+        if (i >= 0) this.redTeam.playerIds.splice(i, 1);
     }
     
     endGame() {

@@ -31,18 +31,22 @@ $(document).ready(function() {
     let $phraseForm = $("#phrase-form");
     let $phraseInput = $("#phrase-input");
 
-
     // Game Elements
     let $gameDiv = $("#game");
     let $team = $("#team");
     let $timer = $("#timer");
     let $roundName = $("#round-name");
     let $phrasesLeft = $("#phrases-left");
-    let $gameOver = $("#game-over");
+    let $gameScore = $("#game-score");
+    
     let $redTeamScore = $("#red-team-score");
-    let $blueTeamScore = $("#blue-team-score");
     let $redTeam = $("#red-team");
+    let $redTeamPhrases = $("#red-team-phrases");
+    let $blueTeamPhrases = $("#blue-team-phrases");
+
+    let $blueTeamScore = $("#blue-team-score");
     let $blueTeam = $("#blue-team");
+    
     let $clueGiver;
     let $clientName;
     
@@ -52,6 +56,8 @@ $(document).ready(function() {
     let $showPhraseButton = $("#show-phrase-button");
     let $correctForm = $("#correct-form");
     let $correctButton = $("#correct-button");
+    let $nextRoundForm = $("#next-round-form");
+    let $nextRoundButton = $("#next-round-button");
     let $phrase = $("#phrase");
 
     // init
@@ -91,6 +97,13 @@ $(document).ready(function() {
         socket.emit('startGame');
         return false;
     });  
+
+    $(document).on('keydown', (e) => {
+        if (e.code === "Space" || e.code === "Enter") { // enable space and enter for game play interaction
+            if ($showPhraseForm.is(":visible")) $showPhraseForm.submit(); 
+            else if ($correctForm.is(":visible")) $correctForm.submit(); 
+        }
+    });
     $showPhraseForm.submit((e) => {
         e.preventDefault();
 
@@ -102,15 +115,19 @@ $(document).ready(function() {
         e.preventDefault();
         socket.emit("phraseCorrectButtonPressed", {});
     });
+    $nextRoundForm.submit((e) => {
+        e.preventDefault();
+        socket.emit("nextRoundButtonPressed", {});
+    });
 
     
     // Server Responses to this client
     ///////////////////////////////////////////////////////////
     
     // Response to joining room
-    socket.on('joinResponse', (data) => { enterRoomLobbyView(data, false) });
+    socket.on('joinResponse', (data) => { enterRoomLobbyView(data) });
     // Response to creating room
-    socket.on('createResponse', (data) => { enterRoomLobbyView(data, true) });
+    socket.on('createResponse', (data) => { enterRoomLobbyView(data) });
     // Response to leaving room
     socket.on('leaveResponse', (data) => { leaveRoomLobbyView(data) });
     // Another user joins or leaves the room
@@ -141,9 +158,19 @@ $(document).ready(function() {
         $roundName.parent().hide();
         $gameControls.hide();
         $phrase.hide();
-        $gameOver.show();
-        $gameOver.text(game.winner + " team wins!");
+        $gameScore.show();
+        $gameScore.text(game.winner + " team wins!");
+    }
 
+    function showScore(game) {
+        $team.parent().hide();
+        $roundName.parent().hide();
+        $gameControls.hide();
+        $phrase.hide();
+        $gameScore.show();
+        $("<span>").addClass('red-text').text('red ').appendTo($gameScore);
+        $("<span>").text(game.blueTeam.score + " : " + game.redTeam.score).appendTo($gameScore);
+        $("<span>").addClass('blue-text').text(' blue').appendTo($gameScore);
     }
 
     function handleSwitchingTurns(game) {
@@ -154,7 +181,8 @@ $(document).ready(function() {
 
     function handleAdvanceToNextRound(game) {
         console.log('next round', game);
-        updateInfo(game);
+        showScore(game);    // show the end of the round score
+        $nextRoundButton.show();  // show the next-round-button
     }
 
     // data: phrase, game
@@ -179,15 +207,16 @@ $(document).ready(function() {
 
     function showActivePlayerControls(game) {
         console.log(game);
-        
-        $phrase.text("");
+        $nextRoundButton.hide();  // hide next-round-button
+        $phrase.text("");   // empty the phrase text
 
-        let team = game[game.activeTeam];
+        // get the id of the active player
+        let team = game[game.activeTeam];       
         let id = team.playerIds[team.activePlayer];
-        if (id === socket.id) {
+        if (id === socket.id) {     // if client is active player, show controls
             $gameControls.show();
             $showPhraseButton.show();
-        } else {
+        } else {                    // otherwise hide them
             $gameControls.hide();
             $correctButton.hide();
         }
@@ -200,6 +229,78 @@ $(document).ready(function() {
         $phrase.text(data.phrase);
     }
 
+    
+    function handleGameStateUpdate(data) {           // Response to gamestate update
+        updateInfo(data.game)     // Update the games turn information
+        // updateTimer(data.game)    // Update the games timer slider
+    }
+    
+    function updateInfo(game) {
+        console.log('update game state', game);
+
+        $team.parent().show();
+        $roundName.parent().show();
+        
+        // display round name and phrases remaining
+        $roundName.text(capitalize(game.roundNames[game.roundNumber]));     // show the game mode
+        $phrasesLeft.text(game.communityBowl.length + " / " + game.allPhrases.length);
+        
+        // change background to match active team color
+        let team = game[game.activeTeam]; 
+        $team.text(team.name + "'s turn")
+        .css("color", COLORS[team.name.toUpperCase()]);
+        
+        // update red team roster and score
+        $redTeamScore.text("Red Team (" + game.redTeam.score + ")");
+        $redTeam.empty();
+        game.redTeam.playerIds.forEach((playerId) => {
+            addPlayerToTeam(playerId, $redTeam);
+        });
+        $redTeamPhrases.empty();
+        game.redTeam.phrasesWon.forEach((phrase) => {
+            addToPhrasesWon(phrase, $redTeamPhrases);
+        });
+        
+        // update blue team roster score
+        $blueTeamScore.text("Blue Team (" + game.blueTeam.score + ")");
+        $blueTeam.empty();
+        game.blueTeam.playerIds.forEach((playerId) => {
+            addPlayerToTeam(playerId, $blueTeam);
+        });
+        $blueTeamPhrases.empty();
+        game.blueTeam.phrasesWon.forEach((phrase) => {
+            addToPhrasesWon(phrase, $blueTeamPhrases);
+        });
+        
+        // add (you) indicator next to client name
+        $clientName = $("#"+socket.id);
+        $clientName.text($clientName.text() + "(you)"); // add a star to client's name
+        
+        // add star and bold to clue giver
+        $clueGiver = $("#"+team.playerIds[team.activePlayer]);
+        $clueGiver.addClass("clue-giver");
+        $clueGiver.text($clueGiver.text() + "*"); // add a star to client's name
+    }
+    
+    function addPlayerToTeam(playerId, $teamDiv) {
+        let name = players[playerId].nickname;
+        $("<p>").attr('id', playerId)
+        .text(name)
+        .appendTo($teamDiv);
+    }
+    
+    function addToPhrasesWon(phrase, $teamPhrasesDiv) {
+        $("<p>").text(phrase).appendTo($teamPhrasesDiv);
+    }
+    
+    function updateTimer(data) {
+        // update client side timer
+        $timer.text(data.timer);
+    }
+    
+    // Chat
+    ////////////////////////////////////////////////////////////////////////////////////////
+    
     // chatHistory: Array of chatData Objects
     // chatData: { message, nickname }
     function updateChat(chatHistory) {
@@ -212,96 +313,6 @@ $(document).ready(function() {
             $li.addClass('myMessage');
         }
         $li.appendTo("#messages");
-    }
-
-    function handleGameStateUpdate(data) {           // Response to gamestate update
-        updateInfo(data.game)     // Update the games turn information
-        // updateTimer(data.game)    // Update the games timer slider
-    }
-
-    function updateInfo(game) {
-        // display round name and phrases remaining
-        $roundName.text(capitalize(game.roundNames[game.roundNumber]));     // show the game mode
-        $phrasesLeft.text(game.communityBowl.length + " / " + game.allPhrases.length);
-        
-        // change background to match active team color
-        let team = game[game.activeTeam]; 
-        $team.text(team.name + "'s turn")
-            .css("color", COLORS[team.name.toUpperCase()]);
-        
-        // update red team roster and score
-        $redTeamScore.text("Red Team (" + game.redTeam.score + ")");
-        $redTeam.empty();
-        game.redTeam.playerIds.forEach((playerId) => {
-            addPlayerToTeam(playerId, $redTeam);
-        });
-
-        // update blue team roster score
-        $blueTeamScore.text("Blue Team (" + game.blueTeam.score + ")");
-        $blueTeam.empty();
-        game.blueTeam.playerIds.forEach((playerId) => {
-            addPlayerToTeam(playerId, $blueTeam);
-        });
-
-        // add (you) indicator next to client name
-        $clientName = $("#"+socket.id);
-        $clientName.text($clientName.text() + "(you)"); // add a star to client's name
-
-        // add star and bold to clue giver
-        $clueGiver = $("#"+team.playerIds[team.activePlayer]);
-        $clueGiver.addClass("clue-giver");
-        $clueGiver.text($clueGiver.text() + "*"); // add a star to client's name
-
-        console.log('update game state', game);
-    }
-
-    function addPlayerToTeam(playerId, $teamDiv) {
-        let name = players[playerId].nickname;
-            $("<p>").attr('id', playerId)
-                .text(name)
-                .appendTo($teamDiv);
-    }
-    
-    function updateTimer(data) {
-        // update client side timer
-        $timer.text(data.timer);
-    }
-
-    // Switching Views
-    ////////////////////////////////////////////////////////////////////////
-    function enterGameView(data) {
-        $roomLobbyDiv.hide();
-        $gameDiv.show();
-    }
-
-    function enterRoomLobbyView(data, host) {
-        if(data.success){
-            console.log("entering room lobby");
-            $joinDiv.hide();
-            $roomLobbyDiv.show();
-            $joinErrorMessage.text('');
-            if (host) {
-                $startGame.show();
-            }
-        } else {
-            $joinErrorMessage.text(data.msg);
-        }
-    }
-
-    function leaveRoomLobbyView(data) {
-        if(data.success){
-            console.log("leaving room lobby");
-            $joinDiv.show();
-            $roomLobbyDiv.hide();
-        }
-    }
-
-    function getLobbyInputData () {
-        return {
-            nickname: $joinNickname.val(),
-            room: $joinRoom.val(),
-            password: $joinPassword.val()
-        }
     }
 
     // Room Lobby
@@ -336,6 +347,41 @@ $(document).ready(function() {
         $phraseInput.val('');                       // empty the input field
         socket.emit("phraseAdded", phrase);         // send the server the phrase
         return false;
+    }
+
+    // Switching Views
+    ////////////////////////////////////////////////////////////////////////
+    function enterGameView(data) {
+        $roomLobbyDiv.hide();
+        $gameDiv.show();
+    }
+
+    function enterRoomLobbyView(data) {
+        if(data.success){
+            console.log("entering room lobby");
+            $joinDiv.hide();
+            $roomLobbyDiv.show();
+            $joinErrorMessage.text('');
+            $startGame.show();
+        } else {
+            $joinErrorMessage.text(data.msg);
+        }
+    }
+
+    function leaveRoomLobbyView(data) {
+        if(data.success){
+            console.log("leaving room lobby");
+            $joinDiv.show();
+            $roomLobbyDiv.hide();
+        }
+    }
+
+    function getLobbyInputData () {
+        return {
+            nickname: $joinNickname.val(),
+            room: $joinRoom.val(),
+            password: $joinPassword.val()
+        }
     }
 
     // Utility Functions

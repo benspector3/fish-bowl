@@ -32,7 +32,6 @@ class Room {
         this.players = {}
         this.chatHistory = [];
         this.game = new Game();
-        this.view = "setup";
 
         // Add room to room list
         ROOM_LIST[this.room] = this
@@ -113,6 +112,7 @@ io.on('connection', function(socket) {
     // clue giver controls 
     socket.on('showPhraseButtonPressed', () => { showNextPhrase(socket) });
     socket.on('phraseCorrectButtonPressed', () => { awardPhrase(socket) });
+    socket.on('nextRoundButtonPressed', () => { startNextRound(socket) });
 
     // send chat messages
     socket.on('chatMessage', (data) => { sendMessage(socket, data); });
@@ -126,11 +126,7 @@ function awardPhrase(socket) {
     let phrase = game.activePhrase;
     game.awardPhraseToTeam();
 
-    emitToRoom(roomObj, "awardPhraseResponse", {    // let the room know the award was given
-        phrase: phrase,
-        game: game,
-        players: roomObj.players
-    });
+    emitToRoom(roomObj, "awardPhraseResponse", { game: game });   // let the room know the award was given
     
     // the round is over. display results and move to next round
     if (game.communityBowl.length === 0) {
@@ -144,12 +140,21 @@ function awardPhrase(socket) {
             emitToRoom(roomObj, 'gameOver', game);
             return;
         } else {
-            emitToRoom(roomObj, 'advanceToNextRound', game); 
+            // advance to the next round
+            // wait to emit 'nextActivePlayer' until the host advances
+            emitToRoom(roomObj, 'advanceToNextRound', game);    
         }
+    } else {
+        // show the next active player the controls
+        emitToRoom(roomObj, 'newActivePlayer', game);
     }
-    
-    // show the next active player the controls
-    emitToRoom(roomObj, 'newActivePlayer', game);
+}
+
+function startNextRound(socket) {
+    if (!PLAYER_LIST[socket.id]) return // Prevent Crash
+    let roomObj = ROOM_LIST[PLAYER_LIST[socket.id].room]  // Get the room that the client called from
+    emitToRoom(roomObj, 'newActivePlayer', roomObj.game);
+    gameUpdate(roomObj);
 }
 
 function showNextPhrase(socket) {
@@ -279,7 +284,7 @@ function joinRoom(socket, data){
         
         // if the room has switched to the game view,
         // join the game 
-        if (roomObj.view === "game") {
+        if (roomObj.game.hasBegun) {
             socket.emit("newGameResponse", {success: true, msg:""})
         }
         roomObj.players[socket.id] = player       // Add player to room
@@ -303,7 +308,14 @@ function leaveRoom(socket){
     
     // If the number of players in the room is 0 at this point, delete the room entirely
     if (!deleteRoomIfEmpty(player.room)) {
-        emitToRoom(roomObj, 'updatePlayerList', roomObj.players);   // Tell clients in the room to update the player list
+        // otherwise, inform the other players
+        emitToRoom(roomObj, 'updatePlayerList', roomObj.players); 
+        if (roomObj.game.hasBegun) {
+            // remove the player from the game
+            roomObj.game.removePlayer(socket.id);
+            // inform all clients
+            gameUpdate(roomObj);
+        }
         // Server Log
         console.log(socket.id + "(" + player.nickname + ") LEFT '" + roomObj.room + "'(" + Object.keys(roomObj.players).length + ")")
     }
@@ -320,10 +332,18 @@ function socketDisconnect(socket){
     if(player){   // If the player was in a room
         let roomObj = ROOM_LIST[player.room];
         delete roomObj.players[socket.id] // Remove the player from their room
-        
+
         // If the number of players in the room is 0 at this point, delete the room entirely
         if (!deleteRoomIfEmpty(player.room)) {
-            emitToRoom(roomObj, 'updatePlayerList', roomObj.players);   // Tell clients in the room to update the player list
+            // otherwise, inform the other players
+            emitToRoom(roomObj, 'updatePlayerList', roomObj.players); 
+            if (roomObj.game.hasBegun) {
+                // remove the player from the game
+                roomObj.game.removePlayer(socket.id);
+                
+                // inform all clients
+                gameUpdate(roomObj);
+            }
             console.log(socket.id + "(" + player.nickname + ") LEFT '" + roomObj.room + "'(" + Object.keys(roomObj.players).length + ")")
         }
     }
@@ -349,29 +369,6 @@ function emitToRoom(roomObj, emitMessage, data) {
 
 // Every second, update the timer in the rooms that are on timed mode
 setInterval(()=>{
-    // Server Daily Restart Logic
-    let time = new Date()
-
-    // Warn clients of restart 10min in advance
-    // if (time.getHours() === restartWarningHour &&
-    //     time.getMinutes() === restartWarningMinute &&
-    //     time.getSeconds() < restartWarningSecond) herokuRestartWarning()
-    // // Restart server at specified time
-    // if (time.getHours() === restartHour &&
-    //     time.getMinutes() === restartMinute &&
-    //     time.getSeconds() < restartSecond) herokuRestart()
-    
-    // AFK Logic
-    // for (let player in PLAYER_LIST){
-    //   PLAYER_LIST[player].afktimer--      // Count down every players afk timer
-    //   // Give them a warning 5min before they get kicked
-    //   if (PLAYER_LIST[player].afktimer < 300) SOCKET_LIST[player].emit('afkWarning')
-    //   if (PLAYER_LIST[player].afktimer < 0) {   // Kick player if their timer runs out
-    //     SOCKET_LIST[player].emit('afkKicked')
-    //     logStats(player + "(" + PLAYER_LIST[player].nickname + ") AFK KICKED FROM '" + ROOM_LIST[PLAYER_LIST[player].room].room + "'(" + Object.keys(ROOM_LIST[PLAYER_LIST[player].room].players).length + ")")
-    //     leaveRoom(SOCKET_LIST[player])
-    //   }
-    // }
     // Game Timer Logic
     for (let room in ROOM_LIST){
         var roomObj = ROOM_LIST[room];

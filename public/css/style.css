@@ -2,6 +2,7 @@
 COLOR_GREEN: #06bb06
 COLOR_BLUE: #048cff
 COLOR_RED: #f70d2d
+COLOR_LIGHT_BLUE: #80c5ff
 */
 
 body { padding: 10px 20px; }
@@ -13,3 +14,6 @@ button {
 .centered { text-align: center; }
 .middle { flex: auto; text-align: center; }
 .right-justified { margin-left: auto; }
+
+.red-text { color: #f70d2d; }
+.blue-text { color: #048cff; }
