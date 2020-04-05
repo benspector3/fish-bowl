@@ -12,8 +12,10 @@
     background-color: white;
 }
 
+.team-banner > h3 { display: inline }
+.team-banner > form { display: inline }
+.team-banner > button { margin-left: 5px; }
 
-
-#red-team { background-color: #f70d2d; }
+#red-team { background-color: #ff435c; }
 #blue-team { background-color: #80c5ff; }
 .clue-giver { font-weight: bold; }

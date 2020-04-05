@@ -7,13 +7,15 @@ COLOR_LIGHT_BLUE: #80c5ff
 
 body { padding: 10px 20px; }
 button {
-    width: 70px;
+    min-width: 70px;
     height: 20px;
     border-radius: 3px;
 }
+.btn-small { min-width: fit-content; padding: 0px 3px;}
+
 .centered { text-align: center; }
 .middle { flex: auto; text-align: center; }
 .right-justified { margin-left: auto; }
 
-.red-text { color: #f70d2d; }
+.red-text { color: #ff435c; }
 .blue-text { color: #048cff; }

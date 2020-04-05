@@ -31,39 +31,22 @@
                     </div>
                 </form>
                 <div id="join-buttons"> 
-                    <button id='join-enter'>Enter Room</button>
-                    <button id='join-create'>Create Room</button>
+                    <button id='join-enter'>Join Game</button>
+                    <button id='join-create'>Create Game</button>
                 </div>
             </div>
             <p id='error-message'> </p>
-            </div>
-
-        <div id="room-lobby" style="display:none">
-            <button id="leave-room">Leave Room</button>
-            <button id="start-game" style="display:none">Start Game</button>
-            
-            <form id="phrase-form" action="">
-                <input id="phrase-input" autocomplete="off" />
-                <button>Add Phrase</button>
-            </form>
-            
-            <ul id="phrases-added">
-                    
-            </ul>
-
-            <div id="chat" style='display:none'>
-                <ul id="messages">
-                    
-                </ul>
-                <form id="chat-form" action="">
-                    <input id="chat-input" autocomplete="off" />
-                    <button>Send</button>
-                </form>
-            </div>
         </div>
 
-        <div id="game" style="display:none"> 
-            <div id="round-info" class='middle'>
+        <button id="leave-room" style="display:none">Leave Game</button>
+
+        <div id="start-container">
+            <button id="start-game" style="display:none">Start Game</button>
+        </div>
+
+        <div id="game"> 
+            <h2 id='game-score' class='middle' style='display: none'> </h2>
+            <div id="round-info" class='middle' style="display:none">
                 <h2 class='middle'>
                     <span id='round-name'></span>
                     (<span id="phrases-left"></span>)
@@ -72,20 +55,27 @@
                     <span id="team"></span>
                     [<span id="timer"></span>]
                 </h2>
-                <h2 id='game-score' class='middle' style='display: none'> </h2>
+                
             </div>
-            
             <div id="turn-info"> 
-                <div class='left-justified'>
-                    <h3 id='red-team-score' class='middle'>Red Team(0)</h3>
-                    <div id="red-team" class="team-container">
-                        
+                <div class='left-justified team-display' style="display:none">
+                    <div class='team-banner middle'>
+                        <h3 >Red Team</h3>
+                        <form id="join-red-team-form" action="">
+                            <button class='btn-small'> join </button>
+                        </form>
                     </div>
-                    <div id="red-team-phrases" class='team-container'>
-
-                    </div>
+                    <div id="red-team" class="team-container"></div>
                 </div>
-                <div class='middle'>
+                <div class="middle" id='add-phrase-container' style="display:none">
+                    <form id="phrase-form" action="">
+                        <input id="phrase-input" autocomplete="off" />
+                        <button>Add Phrase</button>
+                    </form>
+                    
+                    <ul id="phrases-added"></ul>
+                </div>
+                <div class='middle' id="game-play-container" style="display:none">
                     <div id="game-controls-container" style='display:none'>
                         <form id="show-phrase-form" action="">
                             <button id='show-phrase-button'>Show Phrase</button>
@@ -101,16 +91,26 @@
                         <h3 id='phrase'></h1>
                     </div>
                 </div>
-                <div class='right-justified'>
-                    <h3  id='blue-team-score' class='middle'>Blue Team(0)</h3>
-                    <div id="blue-team" class='team-container blue'>
-
+                <div class='right-justified  team-display' style="display:none">
+                    <div class='team-banner middle'>
+                        <h3 >Blue Team</h3>
+                        <form id="join-blue-team-form" action="">
+                            <button class='btn-small'>  join </button>
+                        </form>
                     </div>
-                    <div id="blue-team-phrases" class='team-container'>
-
-                    </div>
+                    <div id="blue-team" class='team-container blue'></div>
                 </div>
             </div>
+        </div>
+
+        <div id="chat" style='display:none'>
+            <ul id="messages">
+                
+            </ul>
+            <form id="chat-form" action="">
+                <input id="chat-input" autocomplete="off" />
+                <button>Send</button>
+            </form>
         </div>
     </body>
     <script language="javascript" type="text/javascript" src="/js/fishbowl.js"></script>

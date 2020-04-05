@@ -6,15 +6,10 @@ class Game {
         this.communityBowl = [];
         this.alternateClueGiver = false;
         this.hasBegun = false;
-    }
-
-    // playerIds: socket ids for each team's players
-    newGame(playerIds) {
-        this.shuffle(playerIds); // randomize the teams and order of the players
 
         this.redTeam = {
             name: 'red',
-            playerIds: playerIds.slice(0, playerIds.length / 2),  // assign the first half of the players to red
+            playerIds: [],
             phrasesWon: [],
             activePlayer: 0,
             nextPlayer: 1,
@@ -22,18 +17,20 @@ class Game {
         } 
         this.blueTeam = {
             name: 'blue',
-            playerIds: playerIds.slice(playerIds.length / 2),     // assign second half of players to blue
+            playerIds: [],
             phrasesWon: [],
             activePlayer: 0,
             nextPlayer: 1,
             score: 0
         }
+    }
 
+    // playerIds: socket ids for each team's players
+    newGame() {
         this.hasBegun = true;
         this.bonusRound = false;
         this.randomTurn();          // When game is created, select red or blue to start, randomly
         this.over = false;          // Whether or not the game has been won / lost
-        this.winner = "";           // Winning team
         this.activePhrase = "";     // The phrase currently being displayed to the cluegiver
         this.timer = this.timerAmount;  // Set the timer
         this.timerRunning = false;
@@ -42,18 +39,34 @@ class Game {
         this.communityBowl = this.allPhrases.slice();
     }
 
+    // [teamToJoin: "redTeam" || "blueTeam"]
+    addPlayer(playerId, teamToJoin) {
+        if (!teamToJoin) {    
+            // if no team is specified, choose the smaller team
+            if (this.blueTeam.playerIds.length > this.redTeam.playerIds.length) {
+                teamToJoin = "redTeam"; 
+            } 
+            else if (this.blueTeam.playerIds.length < this.redTeam.playerIds.length) {
+                teamToJoin = "blueTeam";
+            } 
+            // if teams are even choose randomly
+            else {
+                teamToJoin = Math.random() > 0.5 ? "redTeam" : "blueTeam";
+            } 
+        }
+        // otherwise choose randomly
+        
+        this[teamToJoin].playerIds.push(playerId);
+    }
+
     removePlayer(playerId) {
-        var i = this.blueTeam.playerIds.indexOf(playerId);
+        let i = this.blueTeam.playerIds.indexOf(playerId);
         if (i >= 0) this.blueTeam.playerIds.splice(i, 1);
 
         i = this.redTeam.playerIds.indexOf(playerId);
         if (i >= 0) this.redTeam.playerIds.splice(i, 1);
     }
-    
-    endGame() {
-        this.winner = this.blueTeam.score > this.redTeam.score ? "blue" : "red";
-        return this.winner;
-    }
+
 
     // called when the host presses the start button from the setup lobby
     startTimer() {
