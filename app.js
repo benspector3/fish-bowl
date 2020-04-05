@@ -18,8 +18,6 @@ let restartWarningSecond = 2
 app.use(express.static('public'))
 // app.use(express.static(path.join(__dirname, 'public')));
 
-
-
 // global server variables
 let SOCKET_LIST = {}
 let ROOM_LIST = {}

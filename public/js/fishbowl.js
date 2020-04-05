@@ -122,9 +122,8 @@ $(document).ready(function() {
     socket.on('advanceToNextRound', handleAdvanceToNextRound)
     socket.on('switchingTurns', handleSwitchingTurns);
     socket.on('gameOver', handleGameOver);
-
+    
     socket.on('newActivePlayer', showActivePlayerControls);
-
     socket.on('showPhraseResponse', handleShowPhraseResponse );
     socket.on('awardPhraseResponse', handleAwardPhraseResponse );
     
@@ -149,7 +148,7 @@ $(document).ready(function() {
 
     function handleSwitchingTurns(game) {
         console.log("switching turns", game);
-        $timer.text(data.game.timerAmount - 1);
+        $timer.text(game.timerAmount - 1);
         updateInfo(game);
     }
 
