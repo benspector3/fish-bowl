@@ -42,10 +42,10 @@ $(document).ready(function() {
     let $phrasesLeft = $("#phrases-left");
     let $gameScore = $("#game-score");
     
-    let $joinRedTeamForm = $("#join-red-team-form");
+    let $joinRedTeamButton = $("#join-red-team-button");
     let $redTeam = $("#red-team");
     
-    let $joinBlueTeamForm = $("#join-blue-team-form");
+    let $joinBlueTeamButton = $("#join-blue-team-button");
     let $blueTeam = $("#blue-team");
     
     let $clueGiver;
@@ -53,11 +53,8 @@ $(document).ready(function() {
     
     // game controls
     let $gameControls = $("#game-controls-container");
-    let $showPhraseForm = $("#show-phrase-form");
     let $showPhraseButton = $("#show-phrase-button");
-    let $correctForm = $("#correct-form");
     let $correctButton = $("#correct-button");
-    let $nextRoundForm = $("#next-round-form");
     let $nextRoundButton = $("#next-round-button");
     let $phrase = $("#phrase");
 
@@ -82,46 +79,28 @@ $(document).ready(function() {
 
     // in room buttons
     $phraseForm.submit(addPhrase);
+
     $startGame.click((e) => {
-        e.preventDefault(); // prevent the page from reloading
         socket.emit('startGame');
         return false;
     });  
     
     // in game buttons
-    $joinRedTeamForm.submit((e) => { // client wants to join red team
-        e.preventDefault(); // prevent the page from reloading
-        socket.emit("joinRedTeam"); 
-    }); 
-    $joinBlueTeamForm.submit((e) => { // client wants to join blue team
-        e.preventDefault(); // prevent the page from reloading
-        socket.emit("joinBlueTeam"); 
-    }); 
+    $joinRedTeamButton.click((e) => { socket.emit("joinRedTeam"); }); 
+    $joinBlueTeamButton.click((e) => { socket.emit("joinBlueTeam"); }); 
 
     $(document).on('keydown', (e) => {  // enable space and enter for game play interaction
         if (e.code === "Space") {   // space to press "show phrase" 
-            if ($showPhraseButton.css("display") !== "none") $showPhraseForm.submit();     
+            if ($showPhraseButton.css("display") !== "none") $showPhraseButton.click();     
         }
         if (e.code === "Enter") {   // enter to press "correct"
-            if ($correctButton.css("display") !== "none") $correctForm.submit(); 
+            if ($correctButton.css("display") !== "none") $correctButton.click(); 
         }
-        
     });
-    $showPhraseForm.submit((e) => {
-        e.preventDefault();
 
-        if ($phrase.text() === "") {    // only emit if the phrase is not being shown
-            socket.emit("showPhraseButtonPressed", {} );
-        }
-    });
-    $correctForm.submit((e) => {
-        e.preventDefault();
-        socket.emit("phraseCorrectButtonPressed", {});
-    });
-    $nextRoundForm.submit((e) => {
-        e.preventDefault();
-        socket.emit("nextRoundButtonPressed", {});
-    });
+    $showPhraseButton.click((e) => { socket.emit("showPhraseButtonPressed"); });
+    $correctButton.click((e) => { socket.emit("phraseCorrectButtonPressed"); });
+    $nextRoundButton.click((e) => { socket.emit("nextRoundButtonPressed"); });
 
     // chat buttons
     $chatForm.submit((e) => {
@@ -360,8 +339,8 @@ $(document).ready(function() {
             $addPhrasesDiv.show();
             
             // show joinTeam buttons
-            $joinBlueTeamForm.show();
-            $joinRedTeamForm.show();
+            $joinBlueTeamButton.show();
+            $joinRedTeamButton.show();
         } else {
             $joinErrorMessage.text(data.msg);
         }
@@ -384,8 +363,8 @@ $(document).ready(function() {
 
     function enterGameView(data) {
         console.log("entering game view");
-        $joinBlueTeamForm.hide();
-        $joinRedTeamForm.hide();
+        $joinBlueTeamButton.hide();
+        $joinRedTeamButton.hide();
         $startGame.hide();
         $addPhrasesDiv.hide();
         $gamePlayDiv.show();

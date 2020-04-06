@@ -306,8 +306,8 @@ function createRoom(socket, data){
         roomObj.players[socket.id] = player                     // Add player to room
         roomObj.game.addPlayer(socket.id);                      // Add player to game
 
-        emitToRoom(roomObj, 'gameState', roomObj);                  // tell clients to update team display
         socket.emit('createResponse', {success:true, msg: ""})      // Tell client creation was successful
+        emitToRoom(roomObj, 'gameState', roomObj);                  // tell clients to update team display
         
         console.log(socket.id + "(" + player.nickname + ") CREATED '" + ROOM_LIST[player.room].room + "'(" + Object.keys(ROOM_LIST[player.room].players).length + ")")
     }
@@ -335,8 +335,6 @@ function joinRoom(socket, data){
         let player = new Player(userName, roomName, socket) // Create a new player
         roomObj.players[socket.id] = player                 // Add player to room
         roomObj.game.addPlayer(socket.id);                  // add player to game
-
-        emitToRoom(roomObj, 'gameState', roomObj);                                // update game to display new team member
         socket.emit('joinResponse', {success:true, msg:""}) // Tell client join was successful
         
         // if the game has begun, go directly to the game view
@@ -344,8 +342,10 @@ function joinRoom(socket, data){
             // roomObj.game.addPlayer(player.id);
             socket.emit("newGameResponse", {success: true, game: roomObj.game})
         } 
+        
+        socket.emit('chatHistory', roomObj.chatHistory);    // send client chat history
+        emitToRoom(roomObj, 'gameState', roomObj);          // update game to display new team member
 
-        socket.emit('chatHistory', roomObj.chatHistory);            // send client chat history
         console.log(socket.id + "(" + player.nickname + ") JOINED '" + ROOM_LIST[player.room].room + "'(" + Object.keys(ROOM_LIST[player.room].players).length + ")")
     }
 }
@@ -353,18 +353,15 @@ function joinRoom(socket, data){
 // Leave room function
 // Gets the client that left the room and removes them from the room's player list
 function leaveRoom(socket){
-    if (!PLAYER_LIST[socket.id]) return // Prevent Crash
-    let player = PLAYER_LIST[socket.id]              // Get the player that made the request
-    let roomObj = ROOM_LIST[player.room];
-    delete PLAYER_LIST[player.id]                    // Delete the player from the player list
-    delete roomObj.players[player.id] // Remove the player from their room
-    
+    if (!PLAYER_LIST[socket.id]) return     // Prevent Crash
+    let player = PLAYER_LIST[socket.id]     // Get the player that made the request
+    let roomObj = ROOM_LIST[player.room];   // find the room they were in
+    delete PLAYER_LIST[player.id]           // Delete the player from the player list
+    delete roomObj.players[player.id]       // Remove the player from their room
+
     // If the number of players in the room is 0 at this point, delete the room entirely
     if (!deleteRoomIfEmpty(player.room)) {
-        
-        roomObj.game.removePlayer(socket.id);   // otherwise,nodejlkj remove the player
-        emitToRoom(roomObj, 'gameState', roomObj);                    // inform the room
-        console.log(socket.id + "(" + player.nickname + ") LEFT '" + roomObj.room + "'(" + Object.keys(roomObj.players).length + ")")
+        safelyRemovePlayerFromGame(socket, roomObj);
     }
     socket.emit('leaveResponse', {success:true})     // Tell the client the action was successful
 }
@@ -382,9 +379,7 @@ function socketDisconnect(socket){
 
         // If the number of players in the room is 0 at this point, delete the room entirely
         if (!deleteRoomIfEmpty(player.room)) {
-            roomObj.game.removePlayer(socket.id);   // otherwise remove the player from the game
-            emitToRoom(roomObj, 'gameState', roomObj);                    // inform all clients
-            console.log(socket.id + "(" + player.nickname + ") LEFT '" + roomObj.room + "'(" + Object.keys(roomObj.players).length + ")")
+            safelyRemovePlayerFromGame(player, roomObj);
         }
     }
     // Server Log
@@ -402,6 +397,17 @@ function deleteRoomIfEmpty(room) {
         return true;
     }
     return false;
+}
+
+function safelyRemovePlayerFromGame(player, roomObj) {
+    let activeTeam = roomObj.game[roomObj.game.activeTeam];     // check if the player was the active player on the active team
+    if (activeTeam && activeTeam.playerIds[activeTeam.activePlayer] === player.id) {
+        roomObj.game.changeActivePlayer();
+        emitToRoom(roomObj, 'newActivePlayer', roomObj.game);
+    }
+    roomObj.game.removePlayer(player.id); 
+    emitToRoom(roomObj, 'gameState', roomObj);                    // inform all clients
+    console.log(player.id + "(" + player.nickname + ") LEFT '" + roomObj.room + "'(" + Object.keys(roomObj.players).length + ")")
 }
 
 function emitToRoom(roomObj, emitMessage, data) {
