@@ -176,6 +176,7 @@ $(document).ready(function() {
         $team.parent().hide();
         $roundName.parent().hide();
         $gameControls.hide();
+        $roundInfo.hide();
         $phrase.text("");
         $gameScore.show();
         $gameScore.empty();
@@ -251,9 +252,10 @@ $(document).ready(function() {
     
     function updateInfo(game) {
         console.log('update game state', game);
-
-        if (!game.hasBegun) return; // prevent info updates in the room lobby
-
+        
+        if (!game.hasBegun || game.over) return; // prevent info updates in the room lobby
+        
+        $roundInfo.show();
         $team.parent().show();
         $roundName.parent().show();
         

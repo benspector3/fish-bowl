@@ -8,10 +8,14 @@ COLOR_LIGHT_BLUE: #80c5ff
 body { padding: 10px 20px; }
 button {
     min-width: 70px;
-    height: 20px;
+    min-height: 20px;
     border-radius: 3px;
 }
 .btn-small { min-width: fit-content; padding: 0px 3px;}
+
+#join-form-container {
+    max-width: 540px; 
+}
 
 .centered { text-align: center; }
 .middle { flex: auto; text-align: center; }

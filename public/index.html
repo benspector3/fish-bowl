@@ -1,41 +1,32 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
     <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <title>Fish Bowl</title>
         <script src="/socket.io/socket.io.js"></script>
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
         <link rel="stylesheet" type="text/css" href="css/style.css">
-        <link rel="stylesheet" type="text/css" href="css/join-game.css">
         <link rel="stylesheet" type="text/css" href="css/room-lobby.css">
         <link rel="stylesheet" type="text/css" href="css/chat.css">
         <link rel="stylesheet" type="text/css" href="css/game.css">
-        <script
-  src="https://code.jquery.com/jquery-3.4.1.js"
-  integrity="sha256-WpOohJOqMqqyKL9FccASB9O0KwACQJpFTUBLTYOVvVU="
-  crossorigin="anonymous"></script>
     </head>
     <body>
-        <div id="join-game">
+        <div class="container text-center" id="join-game">
             <h1>Fish Bowl</h1>
-            <div id="join-form-container">
-                <form id="join-form">
-                    <div id='join-labels'>
-                        <label for='join-nickname'>Nickname: </label>
-                        <label for='join-room'>Room: </label>
-                        <label for='join-password'>Password: </label>
-                    </div>
-                    
-                    <div id='join-input'>
-                        <input id='join-nickname' type='text' maxlength="10"></input>
-                        <input id='join-room' type='text' maxlength="10"></input>
-                        <input id='join-password' type='password' maxlength="20"></input>
+            <div class="container-sm" id="join-form-container">
+                <form class="text-center border border-light p-5" action="#!">                
+                    <input placeholder="nickname" class="form-control mb-4" id='join-nickname' type='text' maxlength="15"></input>
+                    <input placeholder="room name" class="form-control mb-4" id='join-room' type='text' maxlength="10"></input>
+                    <input placeholder="password" class="form-control mb-4" id='join-password' type='password' maxlength="20"></input>
+                
+                    <!-- Sign in buttons -->
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-primary" id='join-enter'>Join Game</button>
+                        <button type="button" class="btn btn-success" id='join-create'>Create Game</button>
                     </div>
                 </form>
-                <div id="join-buttons"> 
-                    <button id='join-enter'>Join Game</button>
-                    <button id='join-create'>Create Game</button>
-                </div>
             </div>
-            <p id='error-message'> </p>
+            <p id='error-message' style="color: red;"> </p>
         </div>
 
         <button id="leave-room" style="display:none">Leave Game</button>
@@ -113,5 +104,8 @@
             </form>
         </div>
     </body>
+    <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js" integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
     <script language="javascript" type="text/javascript" src="/js/fishbowl.js"></script>
 </html>
