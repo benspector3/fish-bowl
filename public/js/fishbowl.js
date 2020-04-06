@@ -218,7 +218,6 @@ $(document).ready(function() {
     }
 
     function showActivePlayerControls(game) {
-        console.log(game);
         $nextRoundButton.hide();  // hide next-round-button
         $gameScore.hide();  // hide the game score
         $phrase.text("");   // empty the phrase text
@@ -238,7 +237,6 @@ $(document).ready(function() {
     }
 
     function handleShowPhraseResponse(data) {
-        console.log("showing phrase");
         $showPhraseButton.hide();
         $correctButton.show();
         $phrase.text(data.phrase);
@@ -251,8 +249,6 @@ $(document).ready(function() {
     }
     
     function updateInfo(game) {
-        console.log('update game state', game);
-        
         if (!game.hasBegun || game.over) return; // prevent info updates in the room lobby
         
         $roundInfo.show();

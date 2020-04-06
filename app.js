@@ -6,18 +6,7 @@ const http = require('http').Server(app);
 const io = require('socket.io')(http);
 const Game = require('./server/game.js');
 
-// Daily Server Restart time
-// UTC 13:00:00 = 9AM EST
-let restartHour = 11//13 original
-let restartMinute = 0//0
-let restartSecond = 5
-// restart warning time
-let restartWarningHour = 10//12 original
-let restartWarningMinute = 50//50
-let restartWarningSecond = 2
-
 app.use(express.static('public'))
-// app.use(express.static(path.join(__dirname, 'public')));
 
 // global server variables
 let SOCKET_LIST = {}
@@ -246,12 +235,6 @@ function sendMessage(socket, message) {
 // Gets a room name and password and attempts to make a new room if one doesn't exist
 // On creation, the client that created the room is created and added to the room
 function createRoom(socket, data){
-    
-    // /* Remove When done testing
-    data.room = 'abc';
-    data.password = '123';
-    // */
-    
     let roomName = data.room.trim()     // Trim whitespace from room name
     let passName = data.password.trim() // Trim whitespace from password
     let userName = data.nickname.trim() // Trim whitespace from nickname
@@ -276,10 +259,6 @@ function createRoom(socket, data){
 
         socket.emit('createResponse', {success:true, msg: ""})      // Tell client creation was successful
         
-        // /* Remove When done testing
-        roomObj.game.allPhrases = ['apple', 'banana', 'cherry', 'date'];
-        // */
-
         console.log(socket.id + "(" + player.nickname + ") CREATED '" + ROOM_LIST[player.room].room + "'(" + Object.keys(ROOM_LIST[player.room].players).length + ")")
     }
 }
@@ -288,12 +267,6 @@ function createRoom(socket, data){
 // Gets a room name and poassword and attempts to join said room
 // On joining, the client that joined the room is created and added to the room
 function joinRoom(socket, data){
-    
-    // /* Remove When done testing
-    data.room = 'abc';
-    data.password = '123';
-    // */
-
     let roomName = data.room.trim()     // Trim whitespace from room name
     let pass = data.password.trim()     // Trim whitespace from password
     let userName = data.nickname.trim() // Trim whitespace from nickname
