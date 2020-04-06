@@ -1,7 +1,7 @@
 {
-  "name": "socket-io-chatapp",
+  "name": "fish-bowl",
   "version": "1.0.0",
-  "description": "tutorial project for socket io express nodejs app",
+  "description": "party game combining taboo, charades, and password",
   "main": "app.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",

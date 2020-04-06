@@ -6,7 +6,12 @@ const http = require('http').Server(app);
 const io = require('socket.io')(http);
 const Game = require('./server/game.js');
 
-app.use(express.static('public'))
+// listen for requests on port 3000
+http.listen(PORT, function() {
+    console.log("listening on *:" + PORT);
+});
+
+app.use(express.static('public'));
 
 // global server variables
 let SOCKET_LIST = {}
@@ -59,9 +64,8 @@ class Player {
     }
 }
 
-
 // Server Logic
-///////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 
 // each client that connects to the server creates a new socket object
 // socket.id is unique
@@ -76,7 +80,7 @@ io.on('connection', function(socket) {
     });
 
     // Lobby
-    //////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////
 
     // Room Creation. Called when client attempts to create a rooom
     // Data: player nickname, room name, room password
@@ -112,64 +116,30 @@ io.on('connection', function(socket) {
     socket.on('chatMessage', (data) => { sendMessage(socket, data); });
 });
 
-function changeTeams(socket, teamToJoin) {
-    if (!PLAYER_LIST[socket.id]) return // Prevent Crash
-    let roomObj = ROOM_LIST[PLAYER_LIST[socket.id].room]  // Get the room that the client called from
+// Every second, update the timer in the rooms that are on timed mode
+setInterval(()=>{
+    // Game Timer Logic
+    for (let room in ROOM_LIST){
+        let roomObj = ROOM_LIST[room];
+        if (!roomObj.game.timerRunning) continue;    // if the timer isn't running, move on to the next room
 
-    roomObj.game.removePlayer(socket.id);
-    roomObj.game.addPlayer(socket.id, teamToJoin);
-    emitToRoom(roomObj, 'gameState', roomObj);
-}
-
-function awardPhrase(socket) {
-    if (!PLAYER_LIST[socket.id]) return // Prevent Crash
-    let roomObj = ROOM_LIST[PLAYER_LIST[socket.id].room]  // Get the room that the client called from
-    let game = roomObj.game;
-    game.awardPhraseToTeam();
-
-    emitToRoom(roomObj, "awardPhraseResponse", { game: game });   // let the room know the award was given
-    emitToRoom(roomObj, 'gameState', roomObj);
-
-    // the round is over. display results and move to next round
-    if (game.communityBowl.length === 0) {
-
-        game.goToNextRound();  
-        console.log('advancing to next round: ' + (game.roundNumber + 1));
-        game.stopTimer();
-
-        if (game.over) {
-            emitToRoom(roomObj, 'gameOver', game);
-            return;
-        } else {
-            // advance to the next round
-            // wait to emit 'nextActivePlayer' until the host advances
-            emitToRoom(roomObj, 'advanceToNextRound', game);    
+        roomObj.game.timer--          // count timer down
+        if (roomObj.game.timer < 0){  // If timer runs out, switch that rooms turn
+            console.log('time ran out. switching turns');
+            roomObj.game.resetTimer();
+            roomObj.game.switchTurn();
+            emitToRoom(roomObj, 'switchingTurns', roomObj.game);
+            emitToRoom(roomObj, 'newActivePlayer', roomObj.game);
+            emitToRoom(roomObj, 'gameState', roomObj);
         }
-    } else {
-        // show the next active player the controls
-        emitToRoom(roomObj, 'newActivePlayer', game);
+        
+        // Update the timer value to every client in the room
+        emitToRoom(roomObj, 'timerUpdate', {timer:roomObj.game.timer});
     }
-}
+}, 1000);
 
-function startNextRound(socket) {
-    if (!PLAYER_LIST[socket.id]) return // Prevent Crash
-    let roomObj = ROOM_LIST[PLAYER_LIST[socket.id].room]  // Get the room that the client called from
-    emitToRoom(roomObj, 'newActivePlayer', roomObj.game);
-    emitToRoom(roomObj, 'gameState', roomObj);
-}
-
-function showNextPhrase(socket) {
-    if (!PLAYER_LIST[socket.id]) return // Prevent Crash
-    let roomObj = ROOM_LIST[PLAYER_LIST[socket.id].room]  // Get the room that the client called from
-    let game = roomObj.game;
-
-    game.startTimer();
-
-    let phrase = game.getNextPhrase();      // Make a new game for that room
-
-    console.log("showing phrase: " + phrase);
-    socket.emit('showPhraseResponse', {phrase: phrase});
-}
+// In Game Helpers
+////////////////////////////////////////////////////////////////////////////////////////////
 
 // Gets client that requested the new game and begins the game for the room
 function startGame(socket) {
@@ -206,30 +176,111 @@ function startGame(socket) {
     }
 }
 
+function startNextRound(socket) {
+    if (!PLAYER_LIST[socket.id]) return // Prevent Crash
+    let roomObj = ROOM_LIST[PLAYER_LIST[socket.id].room]  // Get the room that the client called from
+    emitToRoom(roomObj, 'newActivePlayer', roomObj.game);
+    emitToRoom(roomObj, 'gameState', roomObj);
+}
+
+function showNextPhrase(socket) {
+    if (!PLAYER_LIST[socket.id]) return // Prevent Crash
+    let roomObj = ROOM_LIST[PLAYER_LIST[socket.id].room]  // Get the room that the client called from
+    let game = roomObj.game;
+
+    game.startTimer();
+
+    let phrase = game.getNextPhrase();      // Make a new game for that room
+
+    console.log("showing phrase: " + phrase);
+    socket.emit('showPhraseResponse', {phrase: phrase});
+}
+
+function awardPhrase(socket) {
+    if (!PLAYER_LIST[socket.id]) return // Prevent Crash
+    let roomObj = ROOM_LIST[PLAYER_LIST[socket.id].room]  // Get the room that the client called from
+    let game = roomObj.game;
+    game.awardPhraseToTeam();
+
+    emitToRoom(roomObj, "awardPhraseResponse", { game: game });   // let the room know the award was given
+    emitToRoom(roomObj, 'gameState', roomObj);
+
+    // the round is over. display results and move to next round
+    if (game.communityBowl.length === 0) {
+
+        game.goToNextRound();  
+        console.log('advancing to next round: ' + (game.roundNumber + 1));
+        game.stopTimer();
+
+        if (game.over) {
+            emitToRoom(roomObj, 'gameOver', game);
+            return;
+        } else {
+            // advance to the next round
+            // wait to emit 'nextActivePlayer' until the host advances
+            emitToRoom(roomObj, 'advanceToNextRound', game);    
+        }
+    } else {
+        // show the next active player the controls
+        emitToRoom(roomObj, 'newActivePlayer', game);
+    }
+}
+
+// Chat Helpers
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+
+function sendMessage(socket, message) {
+    let player = PLAYER_LIST[socket.id];
+    if (!player) {
+        socket.emit("sendMessageResponse", {success:false});
+    } else {
+        let roomObj = ROOM_LIST[player.room];
+        let data = {
+            message: message,
+            nickname: player.nickname
+        }
+        roomObj.chatHistory.push(data);
+        emitToRoom(roomObj, 'chatMessage', data);
+        socket.emit("sendMessageResponse", {success:true});
+    }
+}
+
+// Game Setup Helpers
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 function addPhraseToGame(socket, phrase) {
     let player = PLAYER_LIST[socket.id];
-    let game = ROOM_LIST[player.room].game;
-    game.addPhrase(phrase);
-    console.log("phrase added. phrases in game: " + game.allPhrases.length);
+    if (!player) {
+        socket.emit("addPhraseToGameResponse", {success:false, msg:'player not found. ' + phrase + ' not added'});
+    } else {
+        let game = ROOM_LIST[player.room].game;
+        game.addPhrase(phrase);
+        socket.emit("addPhraseToGameResponse", {success:true, msg:phrase + ' added'});
+    }
 }
 
 function removePhraseFromGame(socket, phrase) {
     let player = PLAYER_LIST[socket.id];
-    let game = ROOM_LIST[player.room].game;
-    game.removePhrase(phrase);
-    console.log("phrase removed. phrases in game: " + game.allPhrases.length);
+    if (!player) {
+        socket.emit("removePhraseFromGameResponse", {success:false, msg:'player not found. ' + phrase + ' not removed'});
+    } else {
+        let game = ROOM_LIST[player.room].game;
+        game.removePhrase(phrase);
+        socket.emit("removePhraseFromGameResponse", {success:true, msg: phrase + ' removed'});
+    }
 }
 
-function sendMessage(socket, message) {
-    let player = PLAYER_LIST[socket.id];
-    let roomObj = ROOM_LIST[player.room];
-    let data = {
-        message: message,
-        nickname: player.nickname
-    }
-    roomObj.chatHistory.push(data);
-    emitToRoom(roomObj, 'chatMessage', data);
+function changeTeams(socket, teamToJoin) {
+    if (!PLAYER_LIST[socket.id]) return // Prevent Crash
+    let roomObj = ROOM_LIST[PLAYER_LIST[socket.id].room]  // Get the room that the client called from
+
+    roomObj.game.removePlayer(socket.id);
+    roomObj.game.addPlayer(socket.id, teamToJoin);
+    emitToRoom(roomObj, 'gameState', roomObj);
 }
+
+// Join/Create/Leave Room Helpers
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // Create room function
 // Gets a room name and password and attempts to make a new room if one doesn't exist
@@ -250,13 +301,12 @@ function createRoom(socket, data){
         socket.emit('createResponse', {success:false, msg:'Enter A Valid Nickname'})
     } else {    // If the room name and nickname are both valid, proceed
         let roomObj = new Room(roomName, passName)              // Create a new room
-        
+    
         let player = new Player(userName, roomName, socket)     // Create a new player
         roomObj.players[socket.id] = player                     // Add player to room
         roomObj.game.addPlayer(socket.id);                      // Add player to game
 
-        emitToRoom(roomObj, 'gameState', roomObj);                                    // tell clients to update team display
-
+        emitToRoom(roomObj, 'gameState', roomObj);                  // tell clients to update team display
         socket.emit('createResponse', {success:true, msg: ""})      // Tell client creation was successful
         
         console.log(socket.id + "(" + player.nickname + ") CREATED '" + ROOM_LIST[player.room].room + "'(" + Object.keys(ROOM_LIST[player.room].players).length + ")")
@@ -312,7 +362,7 @@ function leaveRoom(socket){
     // If the number of players in the room is 0 at this point, delete the room entirely
     if (!deleteRoomIfEmpty(player.room)) {
         
-        roomObj.game.removePlayer(socket.id);   // otherwise, remove the player
+        roomObj.game.removePlayer(socket.id);   // otherwise,nodejlkj remove the player
         emitToRoom(roomObj, 'gameState', roomObj);                    // inform the room
         console.log(socket.id + "(" + player.nickname + ") LEFT '" + roomObj.room + "'(" + Object.keys(roomObj.players).length + ")")
     }
@@ -341,6 +391,9 @@ function socketDisconnect(socket){
     console.log('DISCONNECT: ' + socket.id);
 }
 
+// General Helpers
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 // If the number of players in the room is 0 at this point, delete the room entirely
 function deleteRoomIfEmpty(room) {
     if (Object.keys(ROOM_LIST[room].players).length === 0) {
@@ -356,30 +409,3 @@ function emitToRoom(roomObj, emitMessage, data) {
         SOCKET_LIST[playerId].emit(emitMessage, data)  // Pass data to the client
     }
 }  
-
-// Every second, update the timer in the rooms that are on timed mode
-setInterval(()=>{
-    // Game Timer Logic
-    for (let room in ROOM_LIST){
-        var roomObj = ROOM_LIST[room];
-        if (!roomObj.game.timerRunning) continue;    // if the timer isn't running, move on to the next room
-
-        roomObj.game.timer--          // count timer down
-        if (roomObj.game.timer < 0){  // If timer runs out, switch that rooms turn
-            console.log('time ran out. switching turns');
-            roomObj.game.resetTimer();
-            roomObj.game.switchTurn();
-            emitToRoom(roomObj, 'switchingTurns', roomObj.game);
-            emitToRoom(roomObj, 'newActivePlayer', roomObj.game);
-            emitToRoom(roomObj, 'gameState', roomObj);
-        }
-        
-        // Update the timer value to every client in the room
-        emitToRoom(roomObj, 'timerUpdate', {timer:roomObj.game.timer});
-    }
-}, 1000)
-
-// listen for requests on port 3000
-http.listen(PORT, function() {
-    console.log("listening on *:" + PORT);
-});
