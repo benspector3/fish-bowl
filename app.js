@@ -1,9 +1,10 @@
+const PORT = process.env.PORT || 3000;
+
 const express = require('express');
 const app = express();
 const http = require('http').Server(app);
 const io = require('socket.io')(http);
 const Game = require('./server/game.js');
-const PORT = 3000;
 
 // Daily Server Restart time
 // UTC 13:00:00 = 9AM EST
