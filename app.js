@@ -156,9 +156,9 @@ function readyGame(socket, increment) {
         socket.emit("playerReadyResponse", {success: false, msg:"You must have at least 4 players in the room to ready up"});
     }
     
-    // prevent games with less than 4 phrases from starting
-    else if (game.allPhrases.length < 4) { 
-        socket.emit("playerReadyResponse", {success: false, msg:"You must have at least 4 phrases to ready up"})
+    // prevent games with less than 10 phrases from starting
+    else if (game.allPhrases.length < 10) { 
+        socket.emit("playerReadyResponse", {success: false, msg:"You need at least 10 phrases to begin. " + (10 - game.allPhrases.length) + "more to go!"})
     }
 
     // prevent games with teams < 2 from starting

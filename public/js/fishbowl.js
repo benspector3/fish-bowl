@@ -346,12 +346,14 @@ $(document).ready(function() {
             
             // clean up join room view
             $joinDiv.hide();                // hide join / create room controls
-            $joinErrorMessage.text('');     // make the join error message balnk
+            $joinErrorMessage.text('');     // make the join error message blank
+            
+            // show the in room / game div
+            $gameDiv.show();            
             
             // show lobby controls
-            $gameDiv.show();
-            $leaveRoom.show();           // show leave room + start game buttons
-            $readyButton.show();           // show leave room + start game buttons
+            $leaveRoom.show();           
+            $readyButton.show();         
             $startGameButton.show();
             $teamDisplays.show();
             $addPhrasesDiv.show();
