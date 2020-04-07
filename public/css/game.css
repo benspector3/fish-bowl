@@ -1,6 +1,5 @@
 #game > button { background-color: #06bb06; }
-#game > #round-info { display: flex; }
-#turn-info { display: flex; margin-top: 20px; }
+
 #phrase-area { margin-top: 20px; }
 .team-container > p { text-align: center; }
 .team-container {
@@ -9,7 +8,9 @@
     vertical-align: 50px;
     min-width: 150px;
     border: solid 1px black;
-    background-color: white;
+    /* background-color: white; */
+    border-radius: 5px;
+    padding: 5px;
 }
 
 .team-banner > h3 { display: inline }

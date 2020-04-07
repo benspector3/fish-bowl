@@ -21,7 +21,11 @@ $(document).ready(function() {
     // Room Lobby Elements
     ////////////////////////////////////////////////////////
     // Buttons
+    let $roomControls = $('#general-room-controls');
     let $leaveRoom = $('#leave-room');
+    let $howToPlay = $("#how-to-play");
+    let $instructions = $("#instructions");
+    let $closeInstructions = $("#close-instructions");
     let $readyButton = $('#ready-button');
     let $startGameButton = $('#start-game-button');
     // Chat
@@ -80,6 +84,18 @@ $(document).ready(function() {
 
     // in room buttons
     $phraseForm.submit(addPhrase);
+
+    $howToPlay.click((e) => { 
+        e.stopPropagation()
+        $instructions.show(); 
+    });
+    $closeInstructions.click((e) => { $instructions.hide(); });
+    $(document).click((e) => { 
+        if ($(event.target) !== $instructions) { 
+            $instructions.hide();
+        }
+    });
+
     $readyButton.click((e) => { // decrease ready count if player is readied up, increase otherwise
         $readyButton.toggleClass('readied');
         socket.emit('readyGame', ($readyButton.hasClass('readied') ? 1 : -1));
@@ -185,8 +201,8 @@ $(document).ready(function() {
 
     function handleSwitchingTurns(game) {
         console.log("switching turns", game);
-        $timer.text(game.timerAmount - 1);
         updateInfo(game);
+        $timer.text(game.timerAmount - 1);
     }
 
     function handleAdvanceToNextRound(game) {
@@ -279,7 +295,7 @@ $(document).ready(function() {
 
         // add (you) indicator next to client name
         $clientName = $("#"+socket.id);
-        $clientName.text($clientName.text() + "(you)"); // add a star to client's name
+        $clientName.text($clientName.text() + " (you)"); // add a star to client's name
         
         // add star and bold to clue giver
         if (game.hasBegun) {
@@ -352,7 +368,7 @@ $(document).ready(function() {
             $gameDiv.show();            
             
             // show lobby controls
-            $leaveRoom.show();           
+            $roomControls.show();           
             $readyButton.show();         
             $startGameButton.show();
             $teamDisplays.show();

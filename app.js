@@ -158,7 +158,7 @@ function readyGame(socket, increment) {
     
     // prevent games with less than 10 phrases from starting
     else if (game.allPhrases.length < 10) { 
-        socket.emit("playerReadyResponse", {success: false, msg:"You need at least 10 phrases to begin. " + (10 - game.allPhrases.length) + "more to go!"})
+        socket.emit("playerReadyResponse", {success: false, msg:"You need at least 10 phrases to begin. " + (10 - game.allPhrases.length) + " more to go!"})
     }
 
     // prevent games with teams < 2 from starting
@@ -426,7 +426,7 @@ function safelyRemovePlayerFromGame(player, roomObj) {
         emitToRoom(roomObj, 'newActivePlayer', roomObj.game);
     }
     roomObj.game.removePlayer(player.id); 
-    roomObj.playersReady--;
+    roomObj.playersReady = Math.max(0, roomObj.playersReady - 1); // prevent negative player ready counts
     emitToRoom(roomObj, 'gameState', roomObj);                    // inform all clients
     console.log(player.id + "(" + player.nickname + ") LEFT '" + roomObj.room + "'(" + Object.keys(roomObj.players).length + ")")
 }

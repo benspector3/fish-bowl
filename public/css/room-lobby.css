@@ -1,14 +1,18 @@
 /* 
 COLOR_GREEN: #06bb06
 COLOR_BLUE: #048cff
+COLOR_LIGHT_BLUE: #80c5ff
 COLOR_RED: #ff435c
 06bb06
 */
-
+#join-form-container {
+    max-width: 540px; 
+}
 #ready-container { text-align: center; }
 .readied { background-color: #03a70391 }
 #start-game-button { background-color: #03a70391; }
-#leave-room { background-color: #ff435c; display: block; margin-bottom: 10px; }
+#leave-room { background-color: #ff435c; }
+#how-to-play { background-color: #80c5ff; margin-left: auto; }
 #phrase-form { margin: 10px;}
 #phrases-added { width: fit-content; margin: auto; list-style: none }
 #phrases-added > li { text-align: right; margin: 0px 5px; }

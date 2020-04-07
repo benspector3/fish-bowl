@@ -14,11 +14,9 @@ button {
 }
 button.btn-small { min-width: fit-content; padding: 0px 3px;}
 button.unclickable { opacity: 0.5; }
-#join-form-container {
-    max-width: 540px; 
-}
 
-.centered { text-align: center; }
+.flex-container { display: flex; margin: 10px; }
+
 .middle { flex: auto; text-align: center; }
 .right-justified { margin-left: auto; }
 

@@ -9,6 +9,7 @@
         <link rel="stylesheet" type="text/css" href="css/room-lobby.css">
         <link rel="stylesheet" type="text/css" href="css/chat.css">
         <link rel="stylesheet" type="text/css" href="css/game.css">
+        <link rel="stylesheet" type="text/css" href="css/modal.css">
     </head>
     <body>
         <div class="container text-center" id="join-game">
@@ -29,7 +30,25 @@
             <p id='error-message' style="color: red;"> </p>
         </div>
 
-        <button id="leave-room" style="display:none">leave game</button>
+        <div class="flex-container" id="general-room-controls" style="display:none">
+            <button id="leave-room">leave game</button>
+            <button id="how-to-play">how to play</button>
+            <div id='instructions' class='modal'>
+                <div class="modal-content">
+                    <span id="close-instructions" class="close">&times;</span>
+                    <div> 
+                        <h3> Rounds </h3>
+                        <p>Fish bowl has 3 rounds of game play where teams will take turns trying to guess as many of the words in the bowl as they can. Turns last 90 seconds and the team with the most phrases guessed at the end of the game wins!</p>
+                        <p>The first round is <span class='bold'>Taboo</span> where the <span class='bold'>clue giver</span> can describe the phrase using any words <span class='ital'>except the words in the phrase</span>.</p>
+                        <p>The second round is <span class="bold">Charades</span> where the clue giver can act out the phrase. No words or sounds are allowed!</p>
+                        <p>The third round is <span class="bold">Password</span> where the clue giver can use one word to describe the phrase. Choose wisely!</p>
+                        <h3> Turns </h3>
+                        <p>The game begins with one team being chosen randomly. One player on the team is assigned to be the clue giver (indicated by the "*") while the rest of the team are guessers. The clue giver switches to the next player on the team after each correctly guessed phrase.</p>
+                        <p>The clock starts running once the first phrase is drawn during a team's turn. The clock continues to run so be ready to draw if you are next up!</p>
+                    </div>
+                </div>
+            </div>
+        </div>
 
         <div id="ready-container">
             <button id="ready-button" style="display:none">ready (0)</button>
@@ -49,7 +68,7 @@
                 </h2>
                 
             </div>
-            <div id="turn-info"> 
+            <div id="turn-info" class='flex-container'> 
                 <div class='left-justified team-display' style="display:none">
                     <div class='team-banner middle'>
                         <h3 >Red Team</h3>
