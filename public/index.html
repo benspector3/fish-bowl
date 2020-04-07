@@ -21,18 +21,19 @@
                 
                     <!-- Sign in buttons -->
                     <div class="btn-group" role="group">
-                        <button type="button" class="btn btn-primary" id='join-enter'>Join Game</button>
-                        <button type="button" class="btn btn-success" id='join-create'>Create Game</button>
+                        <button type="button" class="btn btn-primary" id='join-enter'>join game</button>
+                        <button type="button" class="btn btn-success" id='join-create'>create game</button>
                     </div>
                 </form>
             </div>
             <p id='error-message' style="color: red;"> </p>
         </div>
 
-        <button id="leave-room" style="display:none">Leave Game</button>
+        <button id="leave-room" style="display:none">leave game</button>
 
-        <div id="start-container">
-            <button id="start-game" style="display:none">Start Game</button>
+        <div id="ready-container">
+            <button id="ready-button" style="display:none">ready (0)</button>
+            <button id="start-game-button" style="display:none">start</button>
         </div>
 
         <div id="game"> 
@@ -66,11 +67,11 @@
                 </div>
                 <div class='middle' id="game-play-container" style="display:none">
                     <div id="game-controls-container" style='display:none'>
-                        <button id='show-phrase-button' style='display: none'>Show Phrase</button>
-                        <button id='correct-button' style='display:none'>Correct</button>
+                        <button id='show-phrase-button' style='display: none'>show phrase</button>
+                        <button id='correct-button' style='display:none'>correct</button>
                     </div>
                     <form id="next-round-form" action="">
-                        <button id='next-round-button' style='display:none'>Next Round</button>
+                        <button id='next-round-button' style='display:none'>next round</button>
                     </form>
                     <div id="phrase-area">
                         <h3 id='phrase'></h1>

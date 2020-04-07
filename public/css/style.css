@@ -9,10 +9,11 @@ body { padding: 10px 20px; }
 button {
     min-width: 70px;
     min-height: 20px;
+    padding: 3px 5px;
     border-radius: 3px;
 }
-.btn-small { min-width: fit-content; padding: 0px 3px;}
-
+button.btn-small { min-width: fit-content; padding: 0px 3px;}
+button.unclickable { opacity: 0.5; }
 #join-form-container {
     max-width: 540px; 
 }

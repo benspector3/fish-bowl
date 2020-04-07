@@ -2,10 +2,12 @@
 COLOR_GREEN: #06bb06
 COLOR_BLUE: #048cff
 COLOR_RED: #ff435c
+06bb06
 */
 
-#start-container { text-align: center; }
-#start-game { background-color: #06bb06; }
+#ready-container { text-align: center; }
+.readied { background-color: #03a70391 }
+#start-game-button { background-color: #03a70391; }
 #leave-room { background-color: #ff435c; display: block; margin-bottom: 10px; }
 #phrase-form { margin: 10px;}
 #phrases-added { width: fit-content; margin: auto; list-style: none }

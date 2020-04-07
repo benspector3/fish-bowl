@@ -22,7 +22,8 @@ $(document).ready(function() {
     ////////////////////////////////////////////////////////
     // Buttons
     let $leaveRoom = $('#leave-room');
-    let $startGame = $('#start-game');
+    let $readyButton = $('#ready-button');
+    let $startGameButton = $('#start-game-button');
     // Chat
     let $chatForm = $("#chat-form");
     let $chatInput = $("#chat-input");
@@ -79,11 +80,15 @@ $(document).ready(function() {
 
     // in room buttons
     $phraseForm.submit(addPhrase);
-
-    $startGame.click((e) => {
-        socket.emit('startGame');
-        return false;
-    });  
+    $readyButton.click((e) => { // decrease ready count if player is readied up, increase otherwise
+        $readyButton.toggleClass('readied');
+        socket.emit('readyGame', ($readyButton.hasClass('readied') ? 1 : -1));
+    });
+    $startGameButton.click((e) => {
+        if (!$startGameButton.hasClass('unclickable')) {    // only start the game if the button is clickable
+            socket.emit('startGame');
+        }
+    });
     
     // in game buttons
     $joinRedTeamButton.click((e) => { socket.emit("joinRedTeam"); }); 
@@ -121,6 +126,7 @@ $(document).ready(function() {
     socket.on('leaveResponse', (data) => { leaveRoomLobbyView(data) });
 
     // game events
+    socket.on('playerReadyResponse', handlePlayerReadyResponse);
     socket.on('newGameResponse', handleNewGameResponse);
     socket.on('gameState', handleGameStateUpdate);
     socket.on('advanceToNextRound', handleAdvanceToNextRound)
@@ -138,7 +144,20 @@ $(document).ready(function() {
 
     // Helper Functions
     ////////////////////////////////////////////////////////////////
-
+    function handlePlayerReadyResponse(data) {
+        if (data.success) {
+            if (data.playersReady === data.playersTotal) {
+                $startGameButton.removeClass("unclickable");
+            } else {
+                $startGameButton.addClass("unclickable");
+            }
+            $readyButton.text("ready(" + data.playersReady + ")");
+        } else {
+            $readyButton.removeClass('readied');
+            alert(data.msg);
+        }
+    }
+    
     function handleGameOver(game) {
         console.log("game over!", game);
         showScore(game);
@@ -191,9 +210,7 @@ $(document).ready(function() {
         if (data.success) {
             enterGameView();
             $timer.text(data.game.timerAmount - 1);
-        } else {
-            alert(data.msg);
-        }
+        } 
     }
 
     function showActivePlayerControls(game) {
@@ -334,7 +351,8 @@ $(document).ready(function() {
             // show lobby controls
             $gameDiv.show();
             $leaveRoom.show();           // show leave room + start game buttons
-            $startGame.show();           // show leave room + start game buttons
+            $readyButton.show();           // show leave room + start game buttons
+            $startGameButton.show();
             $teamDisplays.show();
             $addPhrasesDiv.show();
             
@@ -365,7 +383,8 @@ $(document).ready(function() {
         console.log("entering game view");
         $joinBlueTeamButton.hide();
         $joinRedTeamButton.hide();
-        $startGame.hide();
+        $readyButton.hide();
+        $startGameButton.hide();
         $addPhrasesDiv.hide();
         $gamePlayDiv.show();
         $roundInfo.show();

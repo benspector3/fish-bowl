@@ -24,7 +24,8 @@ class Room {
     constructor(name, pass){
         this.room = '' + name
         this.password = '' + pass
-        this.players = {}
+        this.players = {};
+        this.playersReady = 0;
         this.chatHistory = [];
         this.game = new Game();
 
@@ -98,7 +99,8 @@ io.on('connection', function(socket) {
 
     socket.on("phraseAdded", (phrase) => { addPhraseToGame(socket, phrase) });
     socket.on("phraseRemoved", (phrase) => { removePhraseFromGame(socket, phrase) });
-    socket.on("startGame", () => { startGame(socket) });
+    socket.on("readyGame", (increment) => { readyGame(socket, increment) });
+    socket.on("startGame", () => { startGame(socket); });
     
     // In Game
     ////////////////////////////////////////////////////////////////////////
@@ -142,38 +144,56 @@ setInterval(()=>{
 ////////////////////////////////////////////////////////////////////////////////////////////
 
 // Gets client that requested the new game and begins the game for the room
+// increment will be -1 if a player was previously readied, 1 otherwise
+function readyGame(socket, increment) {
+    if (!PLAYER_LIST[socket.id]) return // Prevent Crash
+    let roomObj = ROOM_LIST[PLAYER_LIST[socket.id].room]; // Get the room that the client called from
+    let playerIds = Object.keys(roomObj.players);
+    let game = roomObj.game;
+
+    // prevent games with less than 4 players from starting
+    if (playerIds.length < 4) { 
+        socket.emit("playerReadyResponse", {success: false, msg:"You must have at least 4 players in the room to ready up"});
+    }
+    
+    // prevent games with less than 4 phrases from starting
+    else if (game.allPhrases.length < 4) { 
+        socket.emit("playerReadyResponse", {success: false, msg:"You must have at least 4 phrases to ready up"})
+    }
+
+    // prevent games with teams < 2 from starting
+    else if (game.redTeam.playerIds.length < 2 || game.blueTeam.playerIds.length < 2) {
+        socket.emit("playerReadyResponse", {success: false, msg:"Each team must have at least 2 players to ready up"})
+    } 
+
+    else {
+        // otherwise, increment the playersReady count and inform the room
+        roomObj.playersReady += increment;
+        emitToRoom(roomObj, "playerReadyResponse", {
+            success: true, 
+            msg: "readied up", 
+            playersReady: roomObj.playersReady,
+            playersTotal: playerIds.length
+        });
+    }
+
+    
+}
+
 function startGame(socket) {
     if (!PLAYER_LIST[socket.id]) return // Prevent Crash
     let roomObj = ROOM_LIST[PLAYER_LIST[socket.id].room]; // Get the room that the client called from
     let playerIds = Object.keys(roomObj.players);
+    let game = roomObj.game;
+    game.newGame(playerIds);      // Make a new game for that room
+        
+    let team = game[game.activeTeam];
     
-    // prevent games with less than 4 players from starting
-    if (playerIds.length < 4) { 
-        socket.emit("newGameResponse", {success: false, msg:"You must have at least 4 players in the room to begin"})
-    }
+    emitToRoom(roomObj, 'newGameResponse', {success:true, game: game});
+    emitToRoom(roomObj, 'newActivePlayer', game);
+    emitToRoom(roomObj, 'gameState', roomObj);
     
-    // prevent games with less than 4 phrases from starting
-    else if (roomObj.game.allPhrases.length < 4) { 
-        socket.emit("newGameResponse", {success: false, msg:"You must have at least 4 phrases to begin"})
-    }
-
-    // prevent games with teams < 2 from starting
-    else if (roomObj.game.redTeam.playerIds.length < 2 || roomObj.game.blueTeam.playerIds.length < 2) {
-        socket.emit("newGameResponse", {success: false, msg:"Each team must have at least 2 players to begin"})
-    }
-
-    // otherwise begin teh game
-    else {
-        roomObj.game.newGame(playerIds);      // Make a new game for that room
-        
-        let team = roomObj.game[roomObj.game.activeTeam];
-        
-        emitToRoom(roomObj, 'newGameResponse', {success:true, game: roomObj.game});
-        emitToRoom(roomObj, 'newActivePlayer', roomObj.game);
-        emitToRoom(roomObj, 'gameState', roomObj);
-        
-        console.log("clue giver: " + team.playerIds[team.activePlayer])
-    }
+    console.log("clue giver: " + team.playerIds[team.activePlayer])
 }
 
 function startNextRound(socket) {
@@ -406,6 +426,7 @@ function safelyRemovePlayerFromGame(player, roomObj) {
         emitToRoom(roomObj, 'newActivePlayer', roomObj.game);
     }
     roomObj.game.removePlayer(player.id); 
+    roomObj.playersReady--;
     emitToRoom(roomObj, 'gameState', roomObj);                    // inform all clients
     console.log(player.id + "(" + player.nickname + ") LEFT '" + roomObj.room + "'(" + Object.keys(roomObj.players).length + ")")
 }
