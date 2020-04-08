@@ -57,6 +57,7 @@ class Player {
       }
       this.nickname = tempName
       this.room = room
+      this.ready = false;
       this.timeout = 2100         // # of seconds until kicked for afk (35min)
       this.afktimer = this.timeout
   
@@ -147,37 +148,13 @@ setInterval(()=>{
 // increment will be -1 if a player was previously readied, 1 otherwise
 function readyGame(socket, increment) {
     if (!PLAYER_LIST[socket.id]) return // Prevent Crash
+    let player = PLAYER_LIST[socket.id];
     let roomObj = ROOM_LIST[PLAYER_LIST[socket.id].room]; // Get the room that the client called from
-    let playerIds = Object.keys(roomObj.players);
-    let game = roomObj.game;
-
-    // prevent games with less than 4 players from starting
-    if (playerIds.length < 4) { 
-        socket.emit("playerReadyResponse", {success: false, msg:"You must have at least 4 players in the room to ready up"});
-    }
-    
-    // prevent games with less than 10 phrases from starting
-    else if (game.allPhrases.length < 10) { 
-        socket.emit("playerReadyResponse", {success: false, msg:"You need at least 10 phrases to begin. " + (10 - game.allPhrases.length) + " more to go!"})
-    }
-
-    // prevent games with teams < 2 from starting
-    else if (game.redTeam.playerIds.length < 2 || game.blueTeam.playerIds.length < 2) {
-        socket.emit("playerReadyResponse", {success: false, msg:"Each team must have at least 2 players to ready up"})
-    } 
-
-    else {
-        // otherwise, increment the playersReady count and inform the room
-        roomObj.playersReady += increment;
-        emitToRoom(roomObj, "playerReadyResponse", {
-            success: true, 
-            msg: "readied up", 
-            playersReady: roomObj.playersReady,
-            playersTotal: playerIds.length
-        });
-    }
-
-    
+        
+    // increment the playersReady count and inform the room
+    roomObj.playersReady += increment;
+    player.ready = player.ready ? false : true;
+    emitToRoom(roomObj, "lobbyState", { success: true, roomObj: roomObj });
 }
 
 function startGame(socket) {
@@ -185,15 +162,33 @@ function startGame(socket) {
     let roomObj = ROOM_LIST[PLAYER_LIST[socket.id].room]; // Get the room that the client called from
     let playerIds = Object.keys(roomObj.players);
     let game = roomObj.game;
-    game.newGame(playerIds);      // Make a new game for that room
+
+    // prevent games with less than 4 players from starting
+    if (playerIds.length < 4) { 
+        socket.emit("newGameResponse", {success: false, msg:"You must have at least 4 players in the room to begin"});
+    }
+    
+    // prevent games with less than 10 phrases from starting
+    else if (game.allPhrases.length < 10) { 
+        socket.emit("newGameResponse", {success: false, msg:"You need at least 10 phrases to begin. " + (10 - game.allPhrases.length) + " more to go!"})
+    }
+
+    // prevent games with teams < 2 from starting
+    else if (game.redTeam.playerIds.length < 2 || game.blueTeam.playerIds.length < 2) {
+        socket.emit("newGameResponse", {success: false, msg:"Each team must have at least 2 players to begin"})
+    } 
+
+    else {
+        game.newGame(playerIds);      // Make a new game for that room
+            
+        let team = game[game.activeTeam];
         
-    let team = game[game.activeTeam];
-    
-    emitToRoom(roomObj, 'newGameResponse', {success:true, game: game});
-    emitToRoom(roomObj, 'newActivePlayer', game);
-    emitToRoom(roomObj, 'gameState', roomObj);
-    
-    console.log("clue giver: " + team.playerIds[team.activePlayer])
+        emitToRoom(roomObj, 'newGameResponse', {success:true, game: game});
+        emitToRoom(roomObj, 'newActivePlayer', game);
+        emitToRoom(roomObj, 'gameState', roomObj);
+        
+        console.log("clue giver: " + team.playerIds[team.activePlayer])
+    }
 }
 
 function startNextRound(socket) {
@@ -356,16 +351,18 @@ function joinRoom(socket, data){
         roomObj.players[socket.id] = player                 // Add player to room
         roomObj.game.addPlayer(socket.id);                  // add player to game
         socket.emit('joinResponse', {success:true, msg:""}) // Tell client join was successful
+        socket.emit('chatHistory', roomObj.chatHistory);    // send client chat history
         
         // if the game has begun, go directly to the game view
         if (roomObj.game.hasBegun) {
             // roomObj.game.addPlayer(player.id);
-            socket.emit("newGameResponse", {success: true, game: roomObj.game})
-        } 
+            socket.emit("newGameResponse", {success: true, game: roomObj.game});
+            emitToRoom(roomObj, "gameState", roomObj);
+        } else {
+            emitToRoom(roomObj, "lobbyState", { success: true, roomObj: roomObj });
+        }
         
-        socket.emit('chatHistory', roomObj.chatHistory);    // send client chat history
-        emitToRoom(roomObj, 'gameState', roomObj);          // update game to display new team member
-
+        
         console.log(socket.id + "(" + player.nickname + ") JOINED '" + ROOM_LIST[player.room].room + "'(" + Object.keys(ROOM_LIST[player.room].players).length + ")")
     }
 }
@@ -426,8 +423,17 @@ function safelyRemovePlayerFromGame(player, roomObj) {
         emitToRoom(roomObj, 'newActivePlayer', roomObj.game);
     }
     roomObj.game.removePlayer(player.id); 
-    roomObj.playersReady = Math.max(0, roomObj.playersReady - 1); // prevent negative player ready counts
-    emitToRoom(roomObj, 'gameState', roomObj);                    // inform all clients
+    
+    if (player.ready) {
+        roomObj.playersReady--;
+        player.ready = false;
+    }
+
+    if (roomObj.game.hasBegun) {
+        emitToRoom(roomObj, 'gameState', roomObj);
+    } else {
+        emitToRoom(roomObj, "lobbyState", { success: true, roomObj: roomObj });
+    }
     console.log(player.id + "(" + player.nickname + ") LEFT '" + roomObj.room + "'(" + Object.keys(roomObj.players).length + ")")
 }
 

@@ -142,7 +142,7 @@ $(document).ready(function() {
     socket.on('leaveResponse', (data) => { leaveRoomLobbyView(data) });
 
     // game events
-    socket.on('playerReadyResponse', handlePlayerReadyResponse);
+    socket.on('lobbyState', handleLobbyUpdate);
     socket.on('newGameResponse', handleNewGameResponse);
     socket.on('gameState', handleGameStateUpdate);
     socket.on('advanceToNextRound', handleAdvanceToNextRound)
@@ -160,16 +160,81 @@ $(document).ready(function() {
 
     // Helper Functions
     ////////////////////////////////////////////////////////////////
-    function handlePlayerReadyResponse(data) {
+    
+    function handleLobbyUpdate(data) {
+        updateReadyTally(data);
+        updateTeams(data.roomObj.game, data.roomObj.players)
+    }
+    
+    function updateReadyTally(data) {
+        let roomObj = data.roomObj;
         if (data.success) {
-            if (data.playersReady === data.playersTotal) {
+            if (roomObj.playersReady === Object.keys(roomObj.players).length) {
                 $startGameButton.removeClass("unclickable");
             } else {
                 $startGameButton.addClass("unclickable");
             }
-            $readyButton.text("ready(" + data.playersReady + ")");
+            $readyButton.text("ready (" + roomObj.playersReady + ")")
         } else {
             $readyButton.removeClass('readied');
+        }
+    }
+
+    function updateTeams(game, players) {
+        addPlayerNamesToTeamRoster(game, players, "blueTeam", $blueTeam);
+        addPlayerNamesToTeamRoster(game, players, "redTeam", $redTeam);        
+
+        // add (you) indicator next to client name
+        $clientName = $("#"+socket.id);
+        $clientName.text($clientName.text() + " (you)"); // add a star to client's name
+        
+        // add star and bold to clue giver
+        if (game.hasBegun) {
+            let team = game[game.activeTeam]; 
+            $clueGiver = $("#"+team.playerIds[team.activePlayer]);
+            $clueGiver.addClass("clue-giver");
+            $clueGiver.text($clueGiver.text() + "*"); // add a star to client's name
+        }
+    }
+
+    function addPlayerNamesToTeamRoster(game, players, team, $team) {
+        $team.empty();
+        game[team].playerIds.forEach((playerId) => {
+            let player = players[playerId];
+            let $p = $("<p>").attr('id', playerId).text(player.nickname).appendTo($team);  // display the players name with an id=player.id
+            if (player.ready && !game.hasBegun) {               // during the pre-game lobby...
+                $("<span>").html('&#10004;').prependTo($p);     // add a check to the beginning of their name if they are readied
+            }
+        });
+    }
+
+    function handleGameStateUpdate(roomObj) {           // Response to gamestate update
+        updateTeams(roomObj.game, roomObj.players);
+        updateGameInfo(roomObj.game)     // Update the games turn information
+    }
+
+    function updateGameInfo(game) {
+        if (!game.hasBegun || game.over) return; // prevent info updates in the room lobby
+        
+        $roundInfo.show();
+        $team.parent().show();
+        $roundName.parent().show();
+        
+        // display round name and phrases remaining
+        $roundName.text(capitalize(game.roundNames[game.roundNumber]));     // show the game mode
+        $phrasesLeft.text(game.communityBowl.length + " / " + game.allPhrases.length);
+        
+        // change background to match active team color
+        let team = game[game.activeTeam]; 
+        $team.text(team.name + "'s turn")
+        .css("color", COLORS[team.name.toUpperCase()]);
+    }
+    // data: room, players, game
+    function handleNewGameResponse(data) {
+        if (data.success) {
+            enterGameView();
+            $timer.text(data.game.timerAmount - 1);
+        } else {
             alert(data.msg);
         }
     }
@@ -217,16 +282,7 @@ $(document).ready(function() {
         if (data.game.communityBowl.length > 0) {
             $correctButton.hide();
         }
-        
         updateInfo(data.game);
-    }
-
-    // data: room, players, game
-    function handleNewGameResponse(data) {
-        if (data.success) {
-            enterGameView();
-            $timer.text(data.game.timerAmount - 1);
-        } 
     }
 
     function showActivePlayerControls(game) {
@@ -252,58 +308,6 @@ $(document).ready(function() {
         $showPhraseButton.hide();
         $correctButton.show();
         $phrase.text(data.phrase);
-    }
-
-    
-    function handleGameStateUpdate(data) {           // Response to gamestate update
-        updateTeams(data.game, data.players);
-        updateInfo(data.game)     // Update the games turn information
-    }
-    
-    function updateInfo(game) {
-        if (!game.hasBegun || game.over) return; // prevent info updates in the room lobby
-        
-        $roundInfo.show();
-        $team.parent().show();
-        $roundName.parent().show();
-        
-        // display round name and phrases remaining
-        $roundName.text(capitalize(game.roundNames[game.roundNumber]));     // show the game mode
-        $phrasesLeft.text(game.communityBowl.length + " / " + game.allPhrases.length);
-        
-        // change background to match active team color
-        let team = game[game.activeTeam]; 
-        $team.text(team.name + "'s turn")
-        .css("color", COLORS[team.name.toUpperCase()]);
-    }
-
-    function updateTeams(game, players) {
-        $blueTeam.empty();
-        game.blueTeam.playerIds.forEach((playerId) => {
-            let name = players[playerId].nickname;
-                $("<p>").attr('id', playerId)
-                .text(name)
-                .appendTo($blueTeam);
-        });
-        $redTeam.empty();
-        game.redTeam.playerIds.forEach((playerId) => {
-            let name = players[playerId].nickname;
-                $("<p>").attr('id', playerId)
-                .text(name)
-                .appendTo($redTeam);
-        });
-
-        // add (you) indicator next to client name
-        $clientName = $("#"+socket.id);
-        $clientName.text($clientName.text() + " (you)"); // add a star to client's name
-        
-        // add star and bold to clue giver
-        if (game.hasBegun) {
-            let team = game[game.activeTeam]; 
-            $clueGiver = $("#"+team.playerIds[team.activePlayer]);
-            $clueGiver.addClass("clue-giver");
-            $clueGiver.text($clueGiver.text() + "*"); // add a star to client's name
-        }
     }
     
     function updateTimer(data) {
@@ -369,7 +373,7 @@ $(document).ready(function() {
             
             // show lobby controls
             $roomControls.show();           
-            $readyButton.show();         
+            $readyButton.show();        
             $startGameButton.show();
             $teamDisplays.show();
             $addPhrasesDiv.show();
