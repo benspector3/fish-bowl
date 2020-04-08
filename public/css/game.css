@@ -1,5 +1,4 @@
 #game > button { background-color: #06bb06; }
-
 #phrase-area { margin-top: 20px; }
 .team-container > p { text-align: center; }
 .team-container {
@@ -12,6 +11,7 @@
     border-radius: 5px;
     padding: 5px;
 }
+#game-play-container { padding-top: 2em; }
 
 .team-banner > h3 { display: inline }
 .team-banner > form { display: inline }

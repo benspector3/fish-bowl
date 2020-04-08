@@ -26,14 +26,18 @@ $(document).ready(function() {
     let $howToPlay = $("#how-to-play");
     let $instructions = $("#instructions");
     let $closeInstructions = $("#close-instructions");
+    
+    // Pre game lobby
+    let $preGameLobbyElements = $(".pre-game-lobby");
     let $readyButton = $('#ready-button');
     let $startGameButton = $('#start-game-button');
+    let $phraseForm = $("#phrase-form");
+    let $phraseInput = $("#phrase-input");
+    
     // Chat
     let $chatForm = $("#chat-form");
     let $chatInput = $("#chat-input");
     // Add Phrases Lobby
-    let $phraseForm = $("#phrase-form");
-    let $phraseInput = $("#phrase-input");
 
     // Game Elements
     let $gameDiv = $("#game");
@@ -158,8 +162,8 @@ $(document).ready(function() {
     socket.on('chatMessage', receiveChat);
     socket.on('chatHistory', updateChat);
 
-    // Helper Functions
-    ////////////////////////////////////////////////////////////////
+    // Pre-Game Lobby Helper Functions
+    /////////////////////////////////////////////////////////////////////////////////////////////////
     
     function handleLobbyUpdate(data) {
         updateReadyTally(data);
@@ -208,6 +212,9 @@ $(document).ready(function() {
         });
     }
 
+    // In-Game Lobby Helper Functions
+    /////////////////////////////////////////////////////////////////////////////////////////////////
+
     function handleGameStateUpdate(roomObj) {           // Response to gamestate update
         updateTeams(roomObj.game, roomObj.players);
         updateGameInfo(roomObj.game)     // Update the games turn information
@@ -221,68 +228,23 @@ $(document).ready(function() {
         $roundName.parent().show();
         
         // display round name and phrases remaining
-        $roundName.text(capitalize(game.roundNames[game.roundNumber]));     // show the game mode
-        $phrasesLeft.text(game.communityBowl.length + " / " + game.allPhrases.length);
+        $roundName.text(game.roundNames[game.roundNumber]);     // show the game mode
+        $phrasesLeft.text(game.communityBowl.length + " phrases remaining");
         
         // change background to match active team color
         let team = game[game.activeTeam]; 
         $team.text(team.name + "'s turn")
         .css("color", COLORS[team.name.toUpperCase()]);
     }
+    
     // data: room, players, game
     function handleNewGameResponse(data) {
         if (data.success) {
             enterGameView();
-            $timer.text(data.game.timerAmount - 1);
+            $timer.text(data.game.timer - 1);
         } else {
             alert(data.msg);
         }
-    }
-    
-    function handleGameOver(game) {
-        console.log("game over!", game);
-        showScore(game);
-        let blueTeamScore = game.blueTeam.score;
-        let redTeamScore = game.redTeam.score;
-        let msg = "";
-        if (blueTeamScore > redTeamScore) { msg = "blue team wins!"; }
-        else if (blueTeamScore < redTeamScore) { msg = "red team wins!"; }
-        else { msg = "tie game!"; }
-        $gameScore.before($("<h1>").text(msg).addClass("middle"));
-    }
-
-    function showScore(game) {
-        $team.parent().hide();
-        $roundName.parent().hide();
-        $gameControls.hide();
-        $roundInfo.hide();
-        $phrase.text("");
-        $gameScore.show();
-        $gameScore.empty();
-        $("<span>").addClass('red-text').text('red ').appendTo($gameScore);
-        $("<span>").text(game.redTeam.score + " : " + game.blueTeam.score).appendTo($gameScore);
-        $("<span>").addClass('blue-text').text(' blue').appendTo($gameScore);
-    }
-
-    function handleSwitchingTurns(game) {
-        console.log("switching turns", game);
-        updateInfo(game);
-        $timer.text(game.timerAmount - 1);
-    }
-
-    function handleAdvanceToNextRound(game) {
-        console.log('next round', game);
-        showScore(game);    // show the end of the round score
-        $nextRoundButton.show();  // show the next-round-button
-    }
-
-    // data: phrase, game
-    function handleAwardPhraseResponse(data) {
-        // only show the "show phrase" button if there are phrases left in the bowl
-        if (data.game.communityBowl.length > 0) {
-            $correctButton.hide();
-        }
-        updateInfo(data.game);
     }
 
     function showActivePlayerControls(game) {
@@ -308,6 +270,52 @@ $(document).ready(function() {
         $showPhraseButton.hide();
         $correctButton.show();
         $phrase.text(data.phrase);
+    }
+
+    // data: phrase, game
+    function handleAwardPhraseResponse(data) {
+        // only show the "show phrase" button if there are phrases left in the bowl
+        if (data.game.communityBowl.length > 0) {
+            $correctButton.hide();
+        }
+        updateGameInfo(data.game);
+    }
+
+    function handleSwitchingTurns(game) {
+        console.log("switching turns", game);
+        updateGameInfo(game);
+        $timer.text(game.timer - 1);
+    }
+
+    function handleAdvanceToNextRound(game) {
+        console.log('next round', game);
+        showScore(game);    // show the end of the round score
+        $nextRoundButton.show();  // show the next-round-button
+    }
+
+    function handleGameOver(game) {
+        console.log("game over!", game);
+        showScore(game);
+        let blueTeamScore = game.blueTeam.score;
+        let redTeamScore = game.redTeam.score;
+        let msg = "";
+        if (blueTeamScore > redTeamScore) { msg = "blue team wins!"; }
+        else if (blueTeamScore < redTeamScore) { msg = "red team wins!"; }
+        else { msg = "tie game!"; }
+        $gameScore.before($("<h1>").text(msg).addClass("middle"));
+    }
+
+    function showScore(game) {
+        $team.parent().hide();
+        $roundName.parent().hide();
+        $gameControls.hide();
+        $roundInfo.hide();
+        $phrase.text("");
+        $gameScore.show();
+        $gameScore.empty();
+        $("<span>").addClass('red-text').text('red ').appendTo($gameScore);
+        $("<span>").text(game.redTeam.score + " : " + game.blueTeam.score).appendTo($gameScore);
+        $("<span>").addClass('blue-text').text(' blue').appendTo($gameScore);
     }
     
     function updateTimer(data) {
@@ -371,12 +379,10 @@ $(document).ready(function() {
             // show the in room / game div
             $gameDiv.show();            
             
-            // show lobby controls
+            // show pre-game lobby controls, the team displays, and the general room controls
+            $preGameLobbyElements.show();
             $roomControls.show();           
-            $readyButton.show();        
-            $startGameButton.show();
             $teamDisplays.show();
-            $addPhrasesDiv.show();
             
             // show joinTeam buttons
             $joinBlueTeamButton.show();
@@ -405,17 +411,8 @@ $(document).ready(function() {
         console.log("entering game view");
         $joinBlueTeamButton.hide();
         $joinRedTeamButton.hide();
-        $readyButton.hide();
-        $startGameButton.hide();
-        $addPhrasesDiv.hide();
+        $preGameLobbyElements.hide();
         $gamePlayDiv.show();
         $roundInfo.show();
-    }
-
-    // Utility Functions
-    //////////////////////////////////////////////////////////////////////////////
-    function capitalize(str) {
-        return str[0].toUpperCase() + str.slice(1);
-    }
-    
+    }    
 });

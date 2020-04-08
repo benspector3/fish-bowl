@@ -2,6 +2,7 @@ class Game {
     constructor() {
         this.roundNames = ['taboo', 'charades', 'password', 'ghost charades'];
         this.timerAmount = 91;
+        this.timer = this.timerAmount;
         this.allPhrases = [];
         this.communityBowl = [];
         this.alternateClueGiver = false;
@@ -73,7 +74,6 @@ class Game {
         this.randomTurn();          // When game is created, select red or blue to start, randomly
         this.over = false;          // Whether or not the game has been won / lost
         this.activePhrase = "";     // The phrase currently being displayed to the cluegiver
-        this.timer = this.timerAmount;  // Set the timer
         this.timerRunning = false;
         this.roundNumber = 0;
 

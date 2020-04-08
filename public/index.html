@@ -3,15 +3,22 @@
     <head>
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <title>Fish Bowl</title>
-        <script src="/socket.io/socket.io.js"></script>
+        <!-- favicon -->
+        <link rel="apple-touch-icon" sizes="180x180" href="/favicon_io/apple-touch-icon.png">
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon_io/favicon-32x32.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon_io/favicon-16x16.png">
+        <link rel="manifest" href="/favicon_io/site.webmanifest">
+        
+        <!-- stylesheets -->
         <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
         <link rel="stylesheet" type="text/css" href="css/style.css">
-        <link rel="stylesheet" type="text/css" href="css/room-lobby.css">
+        <link rel="stylesheet" type="text/css" href="css/preGameLobby.css">
         <link rel="stylesheet" type="text/css" href="css/chat.css">
         <link rel="stylesheet" type="text/css" href="css/game.css">
         <link rel="stylesheet" type="text/css" href="css/modal.css">
     </head>
     <body>
+        <!-- Fishbowl Join/Create Lobby -->
         <div class="container text-center" id="join-game">
             <h1>Fish Bowl</h1>
             <div class="container-sm" id="join-form-container">
@@ -30,6 +37,7 @@
             <p id='error-message' style="color: red;"> </p>
         </div>
 
+        <!-- Elements present for pre-game lobby AND in-game -->
         <div class="flex-container" id="general-room-controls" style="display:none">
             <button id="leave-room">leave game</button>
             <button id="how-to-play">how to play</button>
@@ -49,56 +57,56 @@
                 </div>
             </div>
         </div>
-
-        <div id="ready-container">
-            <button id="ready-button" style="display:none">ready (0)</button>
-            <button id="start-game-button" class="unclickable" style="display:none">start</button>
+        
+        <!-- Pre-game lobby Elements -->
+        <div id="ready-container" class='pre-game-lobby' style="display:none">
+            <button id="ready-button" >ready (0)</button>
+            <button id="start-game-button" class="unclickable">start</button>
+            <form id="phrase-form" action="">
+                <input id="phrase-input" autocomplete="off" />
+                <button>add phrase</button>
+            </form>
         </div>
 
+        <!-- In Game Elements -->
         <div id="game"> 
-            <h2 id='game-score' class='middle' style='display: none'> </h2>
-            <div id="round-info" class='middle' style="display:none">
-                <h2 class='middle'>
+            <h2 id='game-score' class='middle in-game' style='display: none'> </h2>
+            <div id="round-info" class='middle in-game' style="display:none">
+                <h4 class='middle'>
                     <span id='round-name'></span>
-                    (<span id="phrases-left"></span>)
-                </h2>
+                </h4>
                 <h2 class='middle'>
                     <span id="team"></span>
                     [<span id="timer"></span>]
                 </h2>
-                
+                <h4 class='middle'>
+                    <span id="phrases-left"></span>
+                </h4>
             </div>
             <div id="turn-info" class='flex-container'> 
                 <div class='left-justified team-display' style="display:none">
                     <div class='team-banner middle'>
-                        <h3 >Red Team</h3>
+                        <h3 >red team</h3>
                         <button id="join-red-team-button" class='btn-small'> join </button>
                     </div>
                     <div id="red-team" class="team-container"></div>
                 </div>
-                <div class="middle" id='add-phrase-container' style="display:none">
-                    <form id="phrase-form" action="">
-                        <input id="phrase-input" autocomplete="off" />
-                        <button>Add Phrase</button>
-                    </form>
-                    
+                <div class="middle pre-game-lobby" style="display:none">
                     <ul id="phrases-added"></ul>
                 </div>
-                <div class='middle' id="game-play-container" style="display:none">
+                <div class='middle in-game' id="game-play-container" style="display:none">
                     <div id="game-controls-container" style='display:none'>
                         <button id='show-phrase-button' style='display: none'>draw phrase</button>
                         <button id='correct-button' style='display:none'>correct</button>
                     </div>
-                    <form id="next-round-form" action="">
-                        <button id='next-round-button' style='display:none'>next round</button>
-                    </form>
+                    <button id='next-round-button' style='display:none'>next round</button>
                     <div id="phrase-area">
                         <h3 id='phrase'></h1>
                     </div>
                 </div>
                 <div class='right-justified  team-display' style="display:none">
                     <div class='team-banner middle'>
-                        <h3 >Blue Team</h3>
+                        <h3 >blue team</h3>
                         <button id="join-blue-team-button" class='btn-small'>  join </button>
                     </div>
                     <div id="blue-team" class='team-container blue'></div>
@@ -112,10 +120,11 @@
             </ul>
             <form id="chat-form" action="">
                 <input id="chat-input" autocomplete="off" />
-                <button>Send</button>
+                <button>send</button>
             </form>
         </div>
     </body>
+    <script src="/socket.io/socket.io.js"></script>
     <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js" integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
