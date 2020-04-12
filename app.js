@@ -206,7 +206,6 @@ function awardPhrase(socket) {
     let game = roomObj.game;    // get the game for that room
     
     game.awardPhraseToTeam();   // award the active phrase to the active team
-    emitToRoom(roomObj, 'updateGame', roomObj);  // let the room know the award was given
     
     if (game.communityBowl.length > 0) {    // 
         game.changeActivePlayer();  // go to the next active player on the active team
@@ -226,6 +225,8 @@ function awardPhrase(socket) {
             game.goToNextRound();  
         }
     }
+    
+    emitToRoom(roomObj, 'updateGame', roomObj);  // let the room know the award was given
 }
 
 // Chat Helpers

@@ -117,13 +117,7 @@ class Game {
         this.roundNumber++;
         this.redTeam.phrasesWon = [];
         this.blueTeam.phrasesWon = [];
-        
         this.communityBowl = this.allPhrases.slice();
-        
-        let lastRound = this.bonusRound ? this.roundNames.length : this.roundNames.length - 1;
-        if (this.roundNumber === lastRound) {
-            this.over = true;
-        }
     }
 
     resetTimer() {
