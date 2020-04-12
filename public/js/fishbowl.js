@@ -27,38 +27,35 @@ $(document).ready(function() {
     let $instructions = $("#instructions");
     let $closeInstructions = $("#close-instructions");
     
+    let $roomContainer = $("#room-container");
+
     // Pre game lobby
     let $preGameLobbyElements = $(".pre-game-lobby");
     let $readyButton = $('#ready-button');
     let $startGameButton = $('#start-game-button');
     let $phraseForm = $("#phrase-form");
     let $phraseInput = $("#phrase-input");
-    
-    // Chat
-    let $chatForm = $("#chat-form");
-    let $chatInput = $("#chat-input");
-    // Add Phrases Lobby
+
+    // Team Elements
+    let $joinRedTeamButton = $("#join-red-team-button");
+    let $redTeamRosterDiv = $("#red-team");
+    let $redTeamPhrasesWon = $("#red-phrases-won");
+    let $joinBlueTeamButton = $("#join-blue-team-button");
+    let $blueTeamRosterDiv = $("#blue-team");
+    let $blueTeamPhrasesWon = $("#blue-phrases-won");
+    let $phrasesWon = $(".phrases-won")
+    let $clueGiver;
+    let $clientName;
 
     // Game Elements
-    let $gameDiv = $("#game");
-    let $teamDisplays = $(".team-display");
+    let $inGameElements = $(".in-game");
     let $roundInfo = $("#round-info");
-    let $addPhrasesDiv = $("#add-phrase-container");
     let $gamePlayDiv = $("#game-play-container");
-    let $team = $("#team");
+    let $activeTeam = $("#active-team");
     let $timer = $("#timer");
     let $roundName = $("#round-name");
     let $phrasesLeft = $("#phrases-left");
     let $gameScore = $("#game-score");
-    
-    let $joinRedTeamButton = $("#join-red-team-button");
-    let $redTeam = $("#red-team");
-    
-    let $joinBlueTeamButton = $("#join-blue-team-button");
-    let $blueTeam = $("#blue-team");
-    
-    let $clueGiver;
-    let $clientName;
     
     // game controls
     let $gameControls = $("#game-controls-container");
@@ -67,30 +64,21 @@ $(document).ready(function() {
     let $nextRoundButton = $("#next-round-button");
     let $phrase = $("#phrase");
 
-    // init
-    ///////////////////////////////////////////////////////////
+    // Chat
+    let $chatForm = $("#chat-form");
+    let $chatInput = $("#chat-input");
 
     // UI Button Handlers
     ////////////////////////////////////////////////////////////////////////////
     
     // lobby buttons
-    $joinEnter.click(() => { 
-        var lobbyData = getLobbyInputData();
-        socket.emit('joinRoom', lobbyData); 
-    });
-    $joinCreate.click(() => { 
-        var lobbyData = getLobbyInputData();
-        socket.emit('createRoom', lobbyData) 
-    });
-    $leaveRoom.click(() => { 
-        socket.emit('leaveRoom', {});
-    });
+    $joinEnter.click(() => { socket.emit('joinRoom', getLobbyInputData()); });
+    $joinCreate.click(() => { socket.emit('createRoom', getLobbyInputData()); });
+    $leaveRoom.click(() => { socket.emit('leaveRoom', {});});
 
-    // in room buttons
-    $phraseForm.submit(addPhrase);
-
+    // pre-game lobby buttons
     $howToPlay.click((e) => { 
-        e.stopPropagation()
+        e.stopPropagation();
         $instructions.show(); 
     });
     $closeInstructions.click((e) => { $instructions.hide(); });
@@ -99,7 +87,7 @@ $(document).ready(function() {
             $instructions.hide();
         }
     });
-
+    $phraseForm.submit(addPhrase);
     $readyButton.click((e) => { // decrease ready count if player is readied up, increase otherwise
         $readyButton.toggleClass('readied');
         socket.emit('readyGame', ($readyButton.hasClass('readied') ? 1 : -1));
@@ -114,6 +102,8 @@ $(document).ready(function() {
     $joinRedTeamButton.click((e) => { socket.emit("joinRedTeam"); }); 
     $joinBlueTeamButton.click((e) => { socket.emit("joinBlueTeam"); }); 
 
+    $showPhraseButton.click((e) => { socket.emit("showPhraseButtonPressed"); });
+    $correctButton.click((e) => { socket.emit("phraseCorrectButtonPressed"); });
     $(document).on('keydown', (e) => {  // enable space and enter for game play interaction
         if (e.code === "Space") {   // space to press "show phrase" 
             if ($showPhraseButton.css("display") !== "none") $showPhraseButton.click();     
@@ -122,9 +112,6 @@ $(document).ready(function() {
             if ($correctButton.css("display") !== "none") $correctButton.click(); 
         }
     });
-
-    $showPhraseButton.click((e) => { socket.emit("showPhraseButtonPressed"); });
-    $correctButton.click((e) => { socket.emit("phraseCorrectButtonPressed"); });
     $nextRoundButton.click((e) => { socket.emit("nextRoundButtonPressed"); });
 
     // chat buttons
@@ -138,27 +125,25 @@ $(document).ready(function() {
     // Server Responses to this client
     ///////////////////////////////////////////////////////////
     
-    // Response to joining room
+    // Fish Bowl Lobby
     socket.on('joinResponse', (data) => { enterRoomLobbyView(data) });
-    // Response to creating room
     socket.on('createResponse', (data) => { enterRoomLobbyView(data) });
-    // Response to leaving room
     socket.on('leaveResponse', (data) => { leaveRoomLobbyView(data) });
 
-    // game events
-    socket.on('lobbyState', handleLobbyUpdate);
+    // pre-game lobby
+    socket.on('updateLobby', handleLobbyUpdate);
     socket.on('newGameResponse', handleNewGameResponse);
-    socket.on('gameState', handleGameStateUpdate);
+    
+    // in game
+    socket.on('updateGame', handleGameUpdate);
+    socket.on('newActivePlayer', showActivePlayerControls);
+    socket.on('showPhraseResponse', handleShowPhraseResponse );
     socket.on('advanceToNextRound', handleAdvanceToNextRound)
     socket.on('switchingTurns', handleSwitchingTurns);
     socket.on('gameOver', handleGameOver);
-    
-    socket.on('newActivePlayer', showActivePlayerControls);
-    socket.on('showPhraseResponse', handleShowPhraseResponse );
-    socket.on('awardPhraseResponse', handleAwardPhraseResponse );
-    
     socket.on('timerUpdate', updateTimer);
 
+    // chat
     socket.on('chatMessage', receiveChat);
     socket.on('chatHistory', updateChat);
 
@@ -185,8 +170,8 @@ $(document).ready(function() {
     }
 
     function updateTeams(game, players) {
-        addPlayerNamesToTeamRoster(game, players, "blueTeam", $blueTeam);
-        addPlayerNamesToTeamRoster(game, players, "redTeam", $redTeam);        
+        addPlayerNamesToTeamRoster(game, players, "blueTeam", $blueTeamRosterDiv);
+        addPlayerNamesToTeamRoster(game, players, "redTeam", $redTeamRosterDiv);        
 
         // add (you) indicator next to client name
         $clientName = $("#"+socket.id);
@@ -201,11 +186,11 @@ $(document).ready(function() {
         }
     }
 
-    function addPlayerNamesToTeamRoster(game, players, team, $team) {
-        $team.empty();
+    function addPlayerNamesToTeamRoster(game, players, team, $teamRosterDiv) {
+        $teamRosterDiv.empty();
         game[team].playerIds.forEach((playerId) => {
             let player = players[playerId];
-            let $p = $("<p>").attr('id', playerId).text(player.nickname).appendTo($team);  // display the players name with an id=player.id
+            let $p = $("<p>").attr('id', playerId).text(player.nickname).appendTo($teamRosterDiv);  // display the players name with an id=player.id
             if (player.ready && !game.hasBegun) {               // during the pre-game lobby...
                 $("<span>").html('&#10004;').prependTo($p);     // add a check to the beginning of their name if they are readied
             }
@@ -215,17 +200,13 @@ $(document).ready(function() {
     // In-Game Lobby Helper Functions
     /////////////////////////////////////////////////////////////////////////////////////////////////
 
-    function handleGameStateUpdate(roomObj) {           // Response to gamestate update
+    function handleGameUpdate(roomObj) {           // Response to gamestate update
         updateTeams(roomObj.game, roomObj.players);
         updateGameInfo(roomObj.game)     // Update the games turn information
     }
 
     function updateGameInfo(game) {
-        if (!game.hasBegun || game.over) return; // prevent info updates in the room lobby
-        
         $roundInfo.show();
-        $team.parent().show();
-        $roundName.parent().show();
         
         // display round name and phrases remaining
         $roundName.text(game.roundNames[game.roundNumber]);     // show the game mode
@@ -233,7 +214,7 @@ $(document).ready(function() {
         
         // change background to match active team color
         let team = game[game.activeTeam]; 
-        $team.text(team.name + "'s turn")
+        $activeTeam.text(team.name + "'s turn")
         .css("color", COLORS[team.name.toUpperCase()]);
     }
     
@@ -249,8 +230,10 @@ $(document).ready(function() {
 
     function showActivePlayerControls(game) {
         $nextRoundButton.hide();  // hide next-round-button
-        $gameScore.hide();  // hide the game score
+        $gameScore.parent().hide();  // hide the game score
+        $phrasesWon.hide();
         $phrase.text("");   // empty the phrase text
+        $correctButton.hide();
         
         // get the id of the active player
         let team = game[game.activeTeam];       
@@ -258,10 +241,8 @@ $(document).ready(function() {
         if (id === socket.id) {     // if client is active player, show controls
             $gameControls.show();
             $showPhraseButton.show();
-            $correctButton.hide();
         } else {                    // otherwise hide all controls
             $gameControls.hide();
-            $correctButton.hide();
             $showPhraseButton.hide();
         }
     }
@@ -272,25 +253,28 @@ $(document).ready(function() {
         $phrase.text(data.phrase);
     }
 
-    // data: phrase, game
-    function handleAwardPhraseResponse(data) {
-        // only show the "show phrase" button if there are phrases left in the bowl
-        if (data.game.communityBowl.length > 0) {
-            $correctButton.hide();
-        }
-        updateGameInfo(data.game);
-    }
-
     function handleSwitchingTurns(game) {
         console.log("switching turns", game);
-        updateGameInfo(game);
         $timer.text(game.timer - 1);
     }
 
     function handleAdvanceToNextRound(game) {
         console.log('next round', game);
         showScore(game);    // show the end of the round score
+        showPhrasesWon(game.redTeam.phrasesWon, game.blueTeam.phrasesWon);
         $nextRoundButton.show();  // show the next-round-button
+    }
+
+    function showPhrasesWon(redPhrases, bluePhrases) {
+        $phrasesWon.empty();
+        $phrasesWon.show();
+        
+        redPhrases.forEach((phrase) => {
+            $redTeamPhrasesWon.append("<p> " + phrase + " </p>");
+        });
+        bluePhrases.forEach((phrase) => {
+            $blueTeamPhrasesWon.append("<p> " + phrase + " </p>");
+        });
     }
 
     function handleGameOver(game) {
@@ -304,14 +288,12 @@ $(document).ready(function() {
         else { msg = "tie game!"; }
         $gameScore.before($("<h1>").text(msg).addClass("middle"));
     }
-
+    
     function showScore(game) {
-        $team.parent().hide();
-        $roundName.parent().hide();
         $gameControls.hide();
         $roundInfo.hide();
         $phrase.text("");
-        $gameScore.show();
+        $gameScore.parent().show();
         $gameScore.empty();
         $("<span>").addClass('red-text').text('red ').appendTo($gameScore);
         $("<span>").text(game.redTeam.score + " : " + game.blueTeam.score).appendTo($gameScore);
@@ -377,12 +359,11 @@ $(document).ready(function() {
             $joinErrorMessage.text('');     // make the join error message blank
             
             // show the in room / game div
-            $gameDiv.show();            
+            $roomContainer.show();            
             
             // show pre-game lobby controls, the team displays, and the general room controls
             $preGameLobbyElements.show();
             $roomControls.show();           
-            $teamDisplays.show();
             
             // show joinTeam buttons
             $joinBlueTeamButton.show();
@@ -402,7 +383,7 @@ $(document).ready(function() {
     function getLobbyInputData () {
         return {
             nickname: $joinNickname.val(),
-            room: $joinRoom.val(),
+            roomName: $joinRoom.val(),
             password: $joinPassword.val()
         }
     }

@@ -99,7 +99,6 @@ class Game {
         this[this.activeTeam].phrasesWon.push(this.activePhrase);
         this[this.activeTeam].score++;
         this.communityBowl.splice(this.communityBowl.indexOf(this.activePhrase), 1);
-        this.changeActivePlayer();
     }
 
     changeActivePlayer() {

@@ -37,87 +37,97 @@
             <p id='error-message' style="color: red;"> </p>
         </div>
 
-        <!-- Elements present for pre-game lobby AND in-game -->
-        <div class="flex-container" id="general-room-controls" style="display:none">
-            <button id="leave-room">leave game</button>
-            <button id="how-to-play">how to play</button>
-            <div id='instructions' class='modal'>
-                <div class="modal-content">
-                    <span id="close-instructions" class="close">&times;</span>
-                    <div> 
-                        <h3> Rounds </h3>
-                        <p>Fish bowl has 3 rounds of game play where teams will take turns trying to guess as many of the words in the bowl as they can. Turns last 90 seconds and the team with the most phrases guessed at the end of the game wins!</p>
-                        <p>The first round is <span class='bold'>Taboo</span> where the <span class='bold'>clue giver</span> can describe the phrase using any words <span class='ital'>except the words in the phrase</span>.</p>
-                        <p>The second round is <span class="bold">Charades</span> where the clue giver can act out the phrase. No words or sounds are allowed!</p>
-                        <p>The third round is <span class="bold">Password</span> where the clue giver can use one word to describe the phrase. Choose wisely!</p>
-                        <h3> Turns </h3>
-                        <p>The game begins with one team being chosen randomly. One player on the team is assigned to be the clue giver (indicated by the "*") while the rest of the team are guessers. The clue giver switches to the next player on the team after each correctly guessed phrase.</p>
-                        <p>The clock starts running once the first phrase is drawn during a team's turn. The clock continues to run so be ready to draw if you are next up!</p>
+        <!-- In Game Elements -->
+        <div id="room-container" style="display: none;"> 
+
+            <!-- Elements present for pre-game lobby AND in-game -->
+            <div class="flex-container" id="general-room-controls">
+                <button id="leave-room">leave game</button>
+                <button id="how-to-play">how to play</button>
+                <div id='instructions' class='modal'>
+                    <div class="modal-content">
+                        <span id="close-instructions" class="close">&times;</span>
+                        <div> 
+                            <h3> Rounds </h3>
+                            <p>Fish bowl has 3 rounds of game play where teams will take turns trying to guess as many of the words in the bowl as they can. Turns last 90 seconds and the team with the most phrases guessed at the end of the game wins!</p>
+                            <p>The first round is <span class='bold'>Taboo</span> where the <span class='bold'>clue giver</span> can describe the phrase using any words <span class='ital'>except the words in the phrase</span>.</p>
+                            <p>The second round is <span class="bold">Charades</span> where the clue giver can act out the phrase. No words or sounds are allowed!</p>
+                            <p>The third round is <span class="bold">Password</span> where the clue giver can use one word to describe the phrase. Choose wisely!</p>
+                            <h3> Turns </h3>
+                            <p>The game begins with one team being chosen randomly. One player on the team is assigned to be the clue giver (indicated by the "*") while the rest of the team are guessers. The clue giver switches to the next player on the team after each correctly guessed phrase.</p>
+                            <p>The clock starts running once the first phrase is drawn during a team's turn. The clock continues to run so be ready to draw if you are next up!</p>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
-        
-        <!-- Pre-game lobby Elements -->
-        <div id="ready-container" class='pre-game-lobby' style="display:none">
-            <button id="ready-button" >ready (0)</button>
-            <button id="start-game-button" class="unclickable">start</button>
-            <form id="phrase-form" action="">
-                <input id="phrase-input" autocomplete="off" />
-                <button>add phrase</button>
-            </form>
-        </div>
 
-        <!-- In Game Elements -->
-        <div id="game"> 
-            <h2 id='game-score' class='middle in-game' style='display: none'> </h2>
-            <div id="round-info" class='middle in-game' style="display:none">
+            <!-- Pre-game lobby Elements -->
+            <div id="ready-container" class='pre-game-lobby'>
+                <button id="ready-button" >ready (0)</button>
+                <button id="start-game-button" class="unclickable">start</button>
+                <form id="phrase-form" action="">
+                    <input id="phrase-input" autocomplete="off" />
+                    <button>add phrase</button>
+                </form>
+            </div>
+
+            <div class="middle in-game">
+                <h2 id='game-score' class='middle'> </h2>
+            </div>
+            <div id="round-info" class='middle in-game'>
                 <h4 class='middle'>
                     <span id='round-name'></span>
                 </h4>
                 <h2 class='middle'>
-                    <span id="team"></span>
-                    [<span id="timer"></span>]
+                    <span id="activeTeam"></span>[<span id="timer"></span>]
                 </h2>
                 <h4 class='middle'>
                     <span id="phrases-left"></span>
                 </h4>
             </div>
+
             <div id="turn-info" class='flex-container'> 
-                <div class='left-justified team-display' style="display:none">
+                <!-- Red Team Roster -->
+                <div class='left-justified team-display'>
                     <div class='team-banner middle'>
                         <h3 >red team</h3>
                         <button id="join-red-team-button" class='btn-small'> join </button>
                     </div>
                     <div id="red-team" class="team-container"></div>
+                    <div id="red-phrases-won" class='team-container phrases-won in-game'> </div>
                 </div>
-                <div class="middle pre-game-lobby" style="display:none">
+
+                <!-- Phrases Added -->
+                <div class="middle pre-game-lobby">
                     <ul id="phrases-added"></ul>
                 </div>
-                <div class='middle in-game' id="game-play-container" style="display:none">
+
+                <!-- Game Controls -->
+                <div class='middle in-game' id="game-play-container">
                     <div id="game-controls-container" style='display:none'>
                         <button id='show-phrase-button' style='display: none'>draw phrase</button>
                         <button id='correct-button' style='display:none'>correct</button>
+                        <div id="phrase-area">
+                            <h3 id='phrase'></h1>
+                        </div>
                     </div>
                     <button id='next-round-button' style='display:none'>next round</button>
-                    <div id="phrase-area">
-                        <h3 id='phrase'></h1>
-                    </div>
                 </div>
-                <div class='right-justified  team-display' style="display:none">
+
+                <!-- Blue Team Roster -->
+                <div class='right-justified  team-display'>
                     <div class='team-banner middle'>
                         <h3 >blue team</h3>
                         <button id="join-blue-team-button" class='btn-small'>  join </button>
                     </div>
                     <div id="blue-team" class='team-container blue'></div>
+                    <div id="blue-phrases-won" class='team-container phrases-won in-game'> </div>
                 </div>
             </div>
         </div>
 
         <div id="chat" style='display:none'>
-            <ul id="messages">
-                
-            </ul>
+            <ul id="messages"></ul>
             <form id="chat-form" action="">
                 <input id="chat-input" autocomplete="off" />
                 <button>send</button>
