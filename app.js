@@ -151,7 +151,7 @@ function readyGame(socket, increment) {
     roomObj.playersReady += increment;          // increment (+1/-1) the playersReady count for the room
     player.ready = player.ready ? false : true; // toggle player.ready 
     
-    emitToRoom(roomObj, "updateLobby", { success: true, roomObj: roomObj }); // update lobby
+    emitToRoom(roomObj, "updateLobby", roomObj); // update lobby
 }
 
 function startGame(socket) {
@@ -225,7 +225,7 @@ function awardPhrase(socket) {
             game.goToNextRound();  
         }
     }
-    
+
     emitToRoom(roomObj, 'updateGame', roomObj);  // let the room know the award was given
 }
 
@@ -309,7 +309,7 @@ function createRoom(socket, data){
         roomObj.game.addPlayer(socket.id);                      // Add player to game
 
         socket.emit('createResponse', {success:true, msg: ""})      // Tell client creation was successful
-        emitToRoom(roomObj, "updateLobby", { success: true, roomObj: roomObj });
+        emitToRoom(roomObj, "updateLobby", roomObj);
         
         console.log(socket.id + "(" + player.nickname + ") CREATED '" + ROOM_LIST[player.roomName].roomName + "'(" + Object.keys(ROOM_LIST[player.roomName].players).length + ")")
     }
@@ -346,7 +346,7 @@ function joinRoom(socket, data){
             socket.emit("newGameResponse", {success: true, game: roomObj.game});
             emitToRoom(roomObj, "updateGame", roomObj);
         } else {
-            emitToRoom(roomObj, "updateLobby", { success: true, roomObj: roomObj });
+            emitToRoom(roomObj, "updateLobby", roomObj);
         }
         
         
@@ -423,7 +423,7 @@ function safelyRemovePlayerFromGame(player, roomObj) {
     if (roomObj.game.hasBegun && !roomObj.game.over) {
         emitToRoom(roomObj, 'updateGame', roomObj);
     } else {
-        emitToRoom(roomObj, "updateLobby", { success: true, roomObj: roomObj });
+        emitToRoom(roomObj, "updateLobby", roomObj);
     }
     console.log(player.id + "(" + player.nickname + ") LEFT '" + roomObj.roomName + "'(" + Object.keys(roomObj.players).length + ")")
 }

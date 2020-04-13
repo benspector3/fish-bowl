@@ -48,7 +48,6 @@ $(document).ready(function() {
     let $clientName;
 
     // Game Elements
-    let $inGameElements = $(".in-game");
     let $roundInfo = $("#round-info");
     let $gamePlayDiv = $("#game-play-container");
     let $activeTeam = $("#active-team");
@@ -150,23 +149,19 @@ $(document).ready(function() {
     // Pre-Game Lobby Helper Functions
     /////////////////////////////////////////////////////////////////////////////////////////////////
     
-    function handleLobbyUpdate(data) {
-        updateReadyTally(data);
-        updateTeams(data.roomObj.game, data.roomObj.players)
+    function handleLobbyUpdate(roomObj) {
+        updateReadyTally(roomObj);
+        updateTeams(roomObj.game, roomObj.players)
     }
     
-    function updateReadyTally(data) {
-        let roomObj = data.roomObj;
-        if (data.success) {
-            if (roomObj.playersReady === Object.keys(roomObj.players).length) {
-                $startGameButton.removeClass("unclickable");
-            } else {
-                $startGameButton.addClass("unclickable");
-            }
-            $readyButton.text("ready (" + roomObj.playersReady + ")")
+    function updateReadyTally(roomObj) {
+        if (roomObj.playersReady === Object.keys(roomObj.players).length) {
+            $startGameButton.removeClass("unclickable");
         } else {
-            $readyButton.removeClass('readied');
+            $startGameButton.addClass("unclickable");
         }
+        $readyButton.text("ready (" + roomObj.playersReady + ")")
+    
     }
 
     function updateTeams(game, players) {
