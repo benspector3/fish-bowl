@@ -401,7 +401,6 @@ function getPlayer(socket) {
 function deleteRoomIfEmpty(roomName) {
     if (Object.keys(ROOM_LIST[roomName].players).length === 0) {
         delete ROOM_LIST[roomName]
-        console.log("DELETE ROOM: '" + room + "'");
         return true;
     }
     return false;
