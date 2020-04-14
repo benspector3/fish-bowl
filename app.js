@@ -133,7 +133,7 @@ setInterval(()=>{
         }
         
         // Update the timer value to every client in the room
-        emitToRoom(roomObj, 'timerUpdate', {timer:roomObj.game.timer});
+        emitToRoom(roomObj, 'timerUpdate', roomObj.game.timer);
     }
 }, 1000);
 
@@ -186,6 +186,7 @@ function startGame(socket) {
 function startNextRound(socket) {
     if (!getPlayer(socket)) return // Prevent Crash
     let roomObj = ROOM_LIST[getPlayer(socket).roomName]  // Get the room that the client called from
+    roomObj.game.goToNextRound();  // clear phrase data for both teams
     emitToRoom(roomObj, 'newActivePlayer', roomObj.game);
     emitToRoom(roomObj, 'updateGame', roomObj);
 }
@@ -213,8 +214,7 @@ function awardPhrase(socket) {
     } else {
         // the round is over. display results and move to next round
         game.stopTimer();
-        
-        let lastRound = game.bonusRound ? game.roundNames.length : game.roundNames.length - 1;
+        let lastRound = game.roundNames.length - (game.bonusRound ? 1 : 2); // if the bonus round is on, play one extra round
         if (game.roundNumber === lastRound) {
             game.over = true;
             emitToRoom(roomObj, 'gameOver', game);
@@ -222,7 +222,6 @@ function awardPhrase(socket) {
             // advance to the next round
             // wait to emit 'nextActivePlayer' until the host advances
             emitToRoom(roomObj, 'advanceToNextRound', game);    
-            game.goToNextRound();  
         }
     }
 
@@ -288,9 +287,9 @@ function changeTeams(socket, teamToJoin) {
 // Gets a room name and password and attempts to make a new room if one doesn't exist
 // On creation, the client that created the room is created and added to the room
 function createRoom(socket, data){
-    let roomName = data.roomName.trim()     // Trim whitespace from room name
-    let passName = data.password.trim() // Trim whitespace from password
-    let userName = data.nickname.trim() // Trim whitespace from nickname
+    let roomName = data.roomName;
+    let passName = data.password;
+    let userName = data.nickname;
 
     if (ROOM_LIST[roomName]) {   // If the requested room name is taken
         // Tell the client the room arleady exists
@@ -310,8 +309,6 @@ function createRoom(socket, data){
 
         socket.emit('createResponse', {success:true, msg: ""})      // Tell client creation was successful
         emitToRoom(roomObj, "updateLobby", roomObj);
-        
-        console.log(socket.id + "(" + player.nickname + ") CREATED '" + ROOM_LIST[player.roomName].roomName + "'(" + Object.keys(ROOM_LIST[player.roomName].players).length + ")")
     }
 }
 
@@ -319,9 +316,9 @@ function createRoom(socket, data){
 // Gets a room name and poassword and attempts to join said room
 // On joining, the client that joined the room is created and added to the room
 function joinRoom(socket, data){
-    let roomName = data.roomName.trim()     // Trim whitespace from room name
-    let pass = data.password.trim()     // Trim whitespace from password
-    let userName = data.nickname.trim() // Trim whitespace from nickname
+    let roomName = data.roomName;
+    let pass = data.password;
+    let userName = data.nickname;
     let roomObj = ROOM_LIST[roomName];
 
     if (!roomObj){
@@ -342,15 +339,11 @@ function joinRoom(socket, data){
         
         // if the game has begun, go directly to the game view
         if (roomObj.game.hasBegun) {
-            // roomObj.game.addPlayer(player.id);
             socket.emit("newGameResponse", {success: true, game: roomObj.game});
             emitToRoom(roomObj, "updateGame", roomObj);
         } else {
             emitToRoom(roomObj, "updateLobby", roomObj);
-        }
-        
-        
-        console.log(socket.id + "(" + player.nickname + ") JOINED '" + ROOM_LIST[player.roomName].roomName + "'(" + Object.keys(ROOM_LIST[player.roomName].players).length + ")")
+        }        
     }
 }
 

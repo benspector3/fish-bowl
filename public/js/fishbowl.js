@@ -172,12 +172,12 @@ $(document).ready(function() {
         $clientName = $("#"+socket.id);
         $clientName.text($clientName.text() + " (you)"); // add a star to client's name
         
-        // add star and bold to clue giver
+        // add indicator and bold to clue giver's name
         if (game.hasBegun) {
             let team = game[game.activeTeam]; 
             $clueGiver = $("#"+team.playerIds[team.activePlayer]);
             $clueGiver.addClass("clue-giver");
-            $clueGiver.text($clueGiver.text() + "*"); // add a star to client's name
+            $clueGiver.text("> " + $clueGiver.text() + " <"); 
         }
     }
 
@@ -200,30 +200,29 @@ $(document).ready(function() {
         updateGameInfo(roomObj.game)     // Update the games turn information
     }
 
-    function updateGameInfo(game) {
-        $roundInfo.show();
-        
+    function updateGameInfo(game) {        
         // display round name and phrases remaining
         $roundName.text(game.roundNames[game.roundNumber]);     // show the game mode
         $phrasesLeft.text(game.communityBowl.length + " phrases remaining");
         
         // change background to match active team color
         let team = game[game.activeTeam]; 
-        $activeTeam.text(team.name + "'s turn")
-        .css("color", COLORS[team.name.toUpperCase()]);
+        $activeTeam.text(team.name + "'s turn ")
+            .css("color", COLORS[team.name.toUpperCase()]);
     }
     
     // data: room, players, game
     function handleNewGameResponse(data) {
         if (data.success) {
             enterGameView();
-            $timer.text(data.game.timer - 1);
+            updateTimer(data.game.timer - 1);
         } else {
             alert(data.msg);
         }
     }
 
     function showActivePlayerControls(game) {
+        $roundInfo.show();
         $nextRoundButton.hide();  // hide next-round-button
         $gameScore.parent().hide();  // hide the game score
         $phrasesWon.hide();
@@ -250,7 +249,7 @@ $(document).ready(function() {
 
     function handleSwitchingTurns(game) {
         console.log("switching turns", game);
-        $timer.text(game.timer - 1);
+        updateTimer(game.timer - 1);
     }
 
     function handleAdvanceToNextRound(game) {
@@ -295,9 +294,9 @@ $(document).ready(function() {
         $("<span>").addClass('blue-text').text(' blue').appendTo($gameScore);
     }
     
-    function updateTimer(data) {
+    function updateTimer(time) {
         // update client side timer
-        $timer.text(data.timer);
+        $timer.text(time);
     }
     
     // Chat
@@ -376,17 +375,22 @@ $(document).ready(function() {
     }
 
     function getLobbyInputData () {
+        var nickname = $joinNickname.val().trim().split("");
+        if (nickname[nickname.length - 1] === "<") {
+            nickname.pop();
+        }
+        if (nickname[0] === ">") {
+            nickname.shift();
+        }
         return {
-            nickname: $joinNickname.val(),
-            roomName: $joinRoom.val(),
-            password: $joinPassword.val()
+            nickname: nickname.join(""),
+            roomName: $joinRoom.val().trim(),
+            password: $joinPassword.val().trim()
         }
     }
 
     function enterGameView(data) {
         console.log("entering game view");
-        $joinBlueTeamButton.hide();
-        $joinRedTeamButton.hide();
         $preGameLobbyElements.hide();
         $gamePlayDiv.show();
         $roundInfo.show();
