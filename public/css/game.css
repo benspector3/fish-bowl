@@ -6,14 +6,11 @@
     vertical-align: 50px;
     min-width: 150px;
     border: solid 1px black;
-    /* background-color: white; */
     border-radius: 5px;
     padding: 5px;
 }
 #game-play-container { padding-top: 2em; }
-#show-phrase-button, #correct-button, #next-round-button {
-    background: #5cb85c;
-}
+#show-phrase-button, #correct-button, #next-round-button { background: #5cb85c; }
 
 .team-banner > h3 { display: inline }
 .team-banner > form { display: inline }

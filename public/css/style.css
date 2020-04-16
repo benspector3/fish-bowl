@@ -6,22 +6,13 @@ COLOR_LIGHT_BLUE: #80c5ff
 */
 
 body { padding: 10px 20px; background: lavender; }
-button {
-    min-width: 70px;
-    min-height: 20px;
-    padding: 5px;
-    border-radius: 5px;
-}
+button { min-width: 70px; min-height: 20px; padding: 5px; border-radius: 5px; }
 button.btn-small { min-width: fit-content; padding: 0px 3px;}
 button.unclickable { opacity: 0.5; }
-
 .in-game { display: none;}
-
 .flex-container { display: flex; margin: 10px; }
-
 .middle { flex: auto; text-align: center; }
 .right-justified { margin-left: auto; }
-
 .bold { font-weight: bold; }
 .ital {font-style: italic; }
 .red-text { color: #ff435c; }

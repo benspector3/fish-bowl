@@ -5,9 +5,8 @@ COLOR_LIGHT_BLUE: #80c5ff
 COLOR_RED: #ff435c
 06bb06
 */
-#join-form-container {
-    max-width: 540px; 
-}
+#lobby-title { margin-top: 10%; }
+#join-form-container { max-width: 540px; }
 #ready-container { text-align: center; }
 .readied { background-color: #03a70391 }
 #start-game-button { background-color: #03a70391; }
