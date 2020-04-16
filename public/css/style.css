@@ -9,8 +9,8 @@ body { padding: 10px 20px; background: lavender; }
 button {
     min-width: 70px;
     min-height: 20px;
-    padding: 3px 5px;
-    border-radius: 3px;
+    padding: 5px;
+    border-radius: 5px;
 }
 button.btn-small { min-width: fit-content; padding: 0px 3px;}
 button.unclickable { opacity: 0.5; }

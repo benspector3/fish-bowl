@@ -379,8 +379,6 @@ function socketDisconnect(socket){
             safelyRemovePlayerFromGame(player, roomObj);
         }
     }
-    // Server Log
-    console.log('DISCONNECT: ' + socket.id);
 }
 
 // General Helpers
@@ -417,7 +415,6 @@ function safelyRemovePlayerFromGame(player, roomObj) {
     } else {
         emitToRoom(roomObj, "updateLobby", roomObj);
     }
-    console.log(player.id + "(" + player.nickname + ") LEFT '" + roomObj.roomName + "'(" + Object.keys(roomObj.players).length + ")")
 }
 
 function emitToRoom(roomObj, emitMessage, data) {

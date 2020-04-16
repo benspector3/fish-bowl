@@ -63,12 +63,20 @@
 
             <!-- Pre-game lobby Elements -->
             <div id="ready-container" class='pre-game-lobby'>
+                <button id="show-add-phrases" >add phrases</button>
                 <button id="ready-button" >ready (0)</button>
                 <button id="start-game-button" class="unclickable">start</button>
-                <form id="phrase-form" action="">
-                    <input id="phrase-input" autocomplete="off" />
-                    <button>add phrase</button>
-                </form>
+                
+                <div id='add-phrases' class='modal'>
+                    <div class='modal-content'>
+                        <span id="close-add-phrases" class="close">&times;</span>
+                        <form id="phrase-form" action="">
+                            <input class='form-control' id="phrase-input" autocomplete="off" />
+                            <button>add phrase</button>
+                        </form>
+                        <ul id="phrases-added"></ul>
+                    </div>
+                </div>
             </div>
 
             <div class="middle in-game">
@@ -96,19 +104,16 @@
                     <div id="red-team" class="team-container"></div>
                     <div id="red-phrases-won" class='team-container phrases-won in-game'> </div>
                 </div>
-
-                <!-- Phrases Added -->
-                <div class="middle pre-game-lobby">
-                    <ul id="phrases-added"></ul>
-                </div>
-
+                
                 <!-- Game Controls -->
-                <div class='middle in-game' id="game-play-container">
-                    <div id="game-controls-container" style='display:none'>
-                        <button id='show-phrase-button' style='display: none'>draw phrase</button>
-                        <button id='correct-button' style='display:none'>correct</button>
-                        <div id="phrase-area">
-                            <h3 id='phrase'></h1>
+                <div class='middle in-game' id="game-play-container">    
+                    <div id="game-controls-container" class='modal' style='display:none'>
+                        <div class="modal-content">
+                            <button id='show-phrase-button' style='display: none'>draw phrase</button>
+                            <button id='correct-button' style='display:none'>correct</button>
+                            <div id="phrase-area">
+                                <h3 id='phrase'></h1>
+                            </div>
                         </div>
                     </div>
                     <button id='next-round-button' style='display:none'>next round</button>

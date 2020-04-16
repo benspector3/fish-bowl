@@ -1,4 +1,3 @@
-#room-container > button { background-color: #06bb06; }
 #phrase-area { margin-top: 20px; }
 .team-container > p { text-align: center; }
 .team-container {
@@ -12,6 +11,9 @@
     padding: 5px;
 }
 #game-play-container { padding-top: 2em; }
+#show-phrase-button, #correct-button, #next-round-button {
+    background: #5cb85c;
+}
 
 .team-banner > h3 { display: inline }
 .team-banner > form { display: inline }

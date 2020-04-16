@@ -2,7 +2,9 @@ $(document).ready(function() {
     let socket = io();
     const COLORS = {
         BLUE: "#048cff",
-        RED: "#f70d2d"
+        RED: "#f70d2d",
+        LIGHT_BLUE: "#80c5ff",
+        LIGHT_RED: "#ff435c"
     }
 
     // Lobby Page Elements
@@ -31,6 +33,9 @@ $(document).ready(function() {
 
     // Pre game lobby
     let $preGameLobbyElements = $(".pre-game-lobby");
+    let $showAddPhrases = $("#show-add-phrases");
+    let $addPhrases = $("#add-phrases");
+    let $closeAddPhrases = $("#close-add-phrases");
     let $readyButton = $('#ready-button');
     let $startGameButton = $('#start-game-button');
     let $phraseForm = $("#phrase-form");
@@ -81,12 +86,14 @@ $(document).ready(function() {
         $instructions.show(); 
     });
     $closeInstructions.click((e) => { $instructions.hide(); });
-    $(document).click((e) => { 
-        if ($(event.target) !== $instructions) { 
-            $instructions.hide();
-        }
+
+    $showAddPhrases.click((e) => { 
+        e.stopPropagation();
+        $addPhrases.show(); 
     });
+    $closeAddPhrases.click((e) => { $addPhrases.hide(); });
     $phraseForm.submit(addPhrase);
+
     $readyButton.click((e) => { // decrease ready count if player is readied up, increase otherwise
         $readyButton.toggleClass('readied');
         socket.emit('readyGame', ($readyButton.hasClass('readied') ? 1 : -1));
@@ -103,15 +110,18 @@ $(document).ready(function() {
 
     $showPhraseButton.click((e) => { socket.emit("showPhraseButtonPressed"); });
     $correctButton.click((e) => { socket.emit("phraseCorrectButtonPressed"); });
-    $(document).on('keydown', (e) => {  // enable space and enter for game play interaction
-        if (e.code === "Space") {   // space to press "show phrase" 
-            if ($showPhraseButton.css("display") !== "none") $showPhraseButton.click();     
+    $nextRoundButton.click((e) => { socket.emit("nextRoundButtonPressed"); });
+
+    $(document).on('keydown', (e) => {
+        if (!isVisible($gameControls)) return;
+
+        if (e.code === "Space" && isVisible($showPhraseButton)) { // space to press "show phrase" 
+            $showPhraseButton.click();     
         }
-        if (e.code === "Enter") {   // enter to press "correct"
-            if ($correctButton.css("display") !== "none") $correctButton.click(); 
+        else if (e.code === "Enter" && isVisible($correctButton)) {   // enter to press "correct"
+            $correctButton.click(); 
         }
     });
-    $nextRoundButton.click((e) => { socket.emit("nextRoundButtonPressed"); });
 
     // chat buttons
     $chatForm.submit((e) => {
@@ -395,4 +405,10 @@ $(document).ready(function() {
         $gamePlayDiv.show();
         $roundInfo.show();
     }    
+    
+    // Utility Functions
+    ////////////////////////////////////////////////////////////////////////////////////////////
+    function isVisible($element) {
+        return $element.css("display") !== "none";
+    }
 });
