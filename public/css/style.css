@@ -22,5 +22,7 @@ button.unclickable { opacity: 0.5; }
 .middle { flex: auto; text-align: center; }
 .right-justified { margin-left: auto; }
 
+.bold { font-weight: bold; }
+.ital {font-style: italic; }
 .red-text { color: #ff435c; }
 .blue-text { color: #048cff; }

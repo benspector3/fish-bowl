@@ -127,13 +127,15 @@ setInterval(()=>{
             roomObj.game.switchTurn();  // change turns
 
             // inform the room
+            emitToRoom(roomObj, 'timerUpdate', roomObj.game.timerAmount - 1);
             emitToRoom(roomObj, 'switchingTurns', roomObj.game);
             emitToRoom(roomObj, 'newActivePlayer', roomObj.game);
             emitToRoom(roomObj, 'updateGame', roomObj);
+        } else {
+            // Update the timer value to every client in the room
+            emitToRoom(roomObj, 'timerUpdate', roomObj.game.timer);
         }
         
-        // Update the timer value to every client in the room
-        emitToRoom(roomObj, 'timerUpdate', roomObj.game.timer);
     }
 }, 1000);
 
