@@ -2,7 +2,7 @@
 .team-container > p { text-align: center; }
 .team-container {
     margin-top: 5px;
-    min-height: 50px;
+    min-height: 75px;
     vertical-align: 50px;
     min-width: 150px;
     border: solid 1px black;
@@ -10,6 +10,7 @@
     padding: 5px;
 }
 #game-play-container { padding-top: 2em; }
+#game-controls-container > .model-content { max-width: 380px; }
 #show-phrase-button, #correct-button, #next-round-button { background: #5cb85c; }
 
 .team-banner > h3 { display: inline }

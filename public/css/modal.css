@@ -37,6 +37,5 @@
     cursor: pointer;
 }
 
-#add-phrases > .modal-content {
-    max-width: 380px;
-}
+#add-phrases > .modal-content { max-width: 380px; }
+#game-controls-container > .model-content { max-width: 380px; }

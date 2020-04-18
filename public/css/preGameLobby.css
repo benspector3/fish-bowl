@@ -8,6 +8,7 @@ COLOR_RED: #ff435c
 #lobby-title { margin-top: 10%; margin-bottom: 20px;}
 #join-form-container { max-width: 540px; }
 #ready-container { text-align: center; }
+#ready-container > button { margin: 25px 5px; }
 .readied { background-color: #03a70391 }
 #start-game-button { background-color: #03a70391; }
 #leave-room { background-color: #ff435c; }
