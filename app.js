@@ -372,8 +372,10 @@ function showNextPhrase(socket) {
 }
 
 function awardPhrase(socket) {
-    if (!getPlayer(socket)) return // Prevent Crash
-    let roomObj = ROOM_LIST[getPlayer(socket).roomName]  // Get the room that the client called from
+    let roomObj = getRoom(socket);  // Get the room that the client called from
+    
+    if (!roomObj) return // Prevent Crash
+    
     let game = roomObj.game;    // get the game for that room
     
     if (!game || (game && !game.hasBegun)) return; // prevent if the game has not begun or does not exist
@@ -402,13 +404,16 @@ function awardPhrase(socket) {
 
 
 function startNextRound(socket) {
-    if (!getPlayer(socket)) return // Prevent Crash
-    let roomObj = ROOM_LIST[getPlayer(socket).roomName]  // Get the room that the client called from
+    let roomObj = getRoom(socket);  // Get the room that the client called from
+    
+    if (!roomObj) return // Prevent Crash
+    
+    let game = roomObj.game;    // get the game for that room
     
     if (!game || (game && !game.hasBegun)) return; // prevent if the game has not begun or does not exist
     
-    roomObj.game.goToNextRound();  // clear phrase data for both teams
-    emitToRoom(roomObj, 'newActivePlayer', roomObj.game);
+    game.goToNextRound();  // clear phrase data for both teams
+    emitToRoom(roomObj, 'newActivePlayer', game);
     emitToRoom(roomObj, 'updateGame', roomObj);
 }
 
