@@ -210,7 +210,7 @@ $(document).ready(function() {
         updateGameInfo(roomObj.game)     // Update the games turn information
     }
 
-    function updateGameInfo(game) {        
+    function updateGameInfo(game) {
         // display round name and phrases remaining
         $roundName.text(game.roundNames[game.roundNumber]);     // show the game mode
         $phrasesLeft.text(game.communityBowl.length + " phrases remaining");
@@ -223,6 +223,7 @@ $(document).ready(function() {
     
     // data: room, players, game
     function handleNewGameResponse(data) {
+        console.log("start game player")
         if (data.success) {
             enterGameView();
             updateTimer(data.game.timer - 1);
@@ -232,6 +233,7 @@ $(document).ready(function() {
     }
 
     function showActivePlayerControls(game) {
+        console.log("new active player")
         $roundInfo.show();
         $nextRoundButton.hide();  // hide next-round-button
         $gameScore.parent().hide();  // hide the game score
@@ -258,12 +260,12 @@ $(document).ready(function() {
     }
 
     function handleSwitchingTurns(game) {
-        console.log("switching turns", game);
+        console.log("switching turns");
         updateTimer(game.timer - 1);
     }
 
     function handleAdvanceToNextRound(game) {
-        console.log('next round', game);
+        console.log('next round');
         showScore(game);    // show the end of the round score
         showPhrasesWon(game.redTeam.phrasesWon, game.blueTeam.phrasesWon);
         $nextRoundButton.show();  // show the next-round-button
@@ -282,7 +284,7 @@ $(document).ready(function() {
     }
 
     function handleGameOver(game) {
-        console.log("game over!", game);
+        console.log("game over!");
         showScore(game);
         let blueTeamScore = game.blueTeam.score;
         let redTeamScore = game.redTeam.score;

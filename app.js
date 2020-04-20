@@ -168,6 +168,7 @@ function createRoom(socket, data){
 
         socket.emit('createResponse', {success:true, msg: ""})      // Tell client creation was successful
         emitToRoom(roomObj, "updateLobby", roomObj);
+        console.log("ROOM CREATED by " + socket.id);
     }
 }
 
@@ -202,24 +203,28 @@ function joinRoom(socket, data){
             emitToRoom(roomObj, "updateGame", roomObj);
         } else {
             emitToRoom(roomObj, "updateLobby", roomObj);
-        }        
+        }       
+        
+        console.log("ROOM JOINED by " + socket.id);
     }
 }
 
 // Leave room function
 // Gets the client that left the room and removes them from the room's player list
 function leaveRoom(socket){
-    if (!getPlayer(socket)) return     // Prevent Crash
     let player = getPlayer(socket)     // Get the player that made the request
-    let roomObj = ROOM_LIST[player.roomName];   // find the room they were in
+    if (!player) return                 // Prevent Crash
+    let roomObj = getRoom(socket);   // find the room they were in
     delete PLAYER_LIST[socket.id]           // Delete the player from the player list
     delete roomObj.players[socket.id]       // Remove the player from their room
 
     // If the number of players in the room is 0 at this point, delete the room entirely
     if (!deleteRoomIfEmpty(player.roomName)) {
-        safelyRemovePlayerFromGame(socket, roomObj);
+        safelyRemovePlayerFromGame(player, roomObj);
     }
     socket.emit('leaveResponse', {success:true})     // Tell the client the action was successful
+
+    console.log("ROOM LEFT: " + socket.id);
 }
 
 // Disconnect function
@@ -237,6 +242,8 @@ function socketDisconnect(socket){
         if (!deleteRoomIfEmpty(player.roomName)) {
             safelyRemovePlayerFromGame(player, roomObj);
         }
+
+        console.log("DISCONNECTED " + socket.id);
     }
 }
 
@@ -250,19 +257,22 @@ function deleteRoomIfEmpty(roomName) {
 }
 
 function safelyRemovePlayerFromGame(player, roomObj) {
-    let activeTeam = roomObj.game[roomObj.game.activeTeam];     // check if the player was the active player on the active team
+    console.log('removing player');
+    // check if the player was the active player on the active team
+    let activeTeam = roomObj.game[roomObj.game.activeTeam];     
     if (activeTeam && activeTeam.playerIds[activeTeam.activePlayer] === player.id) {
         roomObj.game.changeActivePlayer();
         emitToRoom(roomObj, 'newActivePlayer', roomObj.game);
     }
-    roomObj.game.removePlayer(player.id); 
+    roomObj.game.removePlayer(player.id); // remove player from their team
     
     if (player.ready) {
+        console.log("lowering ready count")
         roomObj.playersReady--; // decrement room ready count
         player.ready = false;   // toggle player ready
     }
 
-    if (roomObj.game.hasBegun && !roomObj.game.over) {
+    if (roomObj.game.hasBegun && !roomObj.game.over) { // send game updates if the game 
         emitToRoom(roomObj, 'updateGame', roomObj);
     } else {
         emitToRoom(roomObj, "updateLobby", roomObj);
@@ -273,30 +283,34 @@ function safelyRemovePlayerFromGame(player, roomObj) {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 function addPhraseToGame(socket, phrase) {
-    let player = getPlayer(socket);
-    if (!player) {
-        socket.emit("addPhraseToGameResponse", {success:false, msg:'player not found. ' + phrase + ' not added'});
+    let roomObj = getRoom(socket);
+    if (!roomObj) {
+        socket.emit("addPhraseToGameResponse", {success:false, msg:'room not found. ' + phrase + ' not added'});
     } else {
-        let game = ROOM_LIST[player.roomName].game;
-        game.addPhrase(phrase);
+        roomObj.game.addPhrase(phrase);
         socket.emit("addPhraseToGameResponse", {success:true, msg:phrase + ' added'});
     }
 }
 
 function removePhraseFromGame(socket, phrase) {
-    let player = getPlayer(socket);
-    if (!player) {
-        socket.emit("removePhraseFromGameResponse", {success:false, msg:'player not found. ' + phrase + ' not removed'});
+    let roomObj = getRoom(socket);
+    if (!roomObj) {
+        socket.emit("removePhraseFromGameResponse", {success:false, msg:'room not found. ' + phrase + ' not removed'});
     } else {
-        let game = ROOM_LIST[player.roomName].game;
-        game.removePhrase(phrase);
+        roomObj.game.removePhrase(phrase);
         socket.emit("removePhraseFromGameResponse", {success:true, msg: phrase + ' removed'});
     }
 }
 
 function changeTeams(socket, teamToJoin) {
-    if (!getPlayer(socket)) return // Prevent Crash
-    let roomObj = ROOM_LIST[getPlayer(socket).roomName]  // Get the room that the client called from
+    let roomObj = getRoom(socket);
+    
+    if (!roomObj) return // Prevent Crash
+    
+    let game = roomObj.game;
+
+    if (!game) return; // prevent crash
+
     roomObj.game.removePlayer(socket.id);
     roomObj.game.addPlayer(socket.id, teamToJoin);
     emitToRoom(roomObj, "updateLobby", roomObj);
@@ -305,22 +319,21 @@ function changeTeams(socket, teamToJoin) {
 // Gets client that requested the new game and begins the game for the room
 // increment will be -1 if a player was previously readied, 1 otherwise
 function readyGame(socket, increment) {
-    if (!getPlayer(socket)) return     // Prevent Crash
+    let roomObj = getRoom(socket); // Get the room that the client called from
+    
+    if (!roomObj) return     // Prevent Crash
     
     let player = getPlayer(socket);       // get the player based on their socket id
-    let roomObj = ROOM_LIST[player.roomName]; // Get the room that the client called from
         
     roomObj.playersReady += increment;          // increment (+1/-1) the playersReady count for the room
     player.ready = player.ready ? false : true; // toggle player.ready 
-    
     emitToRoom(roomObj, "updateLobby", roomObj); // update lobby
 }
 
 function startGame(socket) {
-    if (!getPlayer(socket)) return // Prevent Crash
-    let roomObj = ROOM_LIST[getPlayer(socket).roomName]; // Get the room that the client called from
-
-    if (!roomObj || !roomObj.game) return; // prevent if the room / game does not exist
+    let roomObj = getRoom(socket) // Get the room that the client called from
+    
+    if (!roomObj || !roomObj.game) return // Prevent Crash
 
     let playerIds = Object.keys(roomObj.players);
     let game = roomObj.game;
@@ -351,13 +364,8 @@ function startGame(socket) {
 // In Game Helpers
 ////////////////////////////////////////////////////////////////////////////////////////////
 
-function getRoom(socket) {
-    let player = getPlayer(socket);
-    if (!player) return;
-    return ROOM_LIST[player.roomName]
-}
-
 function showNextPhrase(socket) {
+    console.log('showing phrase');
     let roomObj = getRoom(socket);  // Get the room that the client called from
     
     if (!roomObj) return // Prevent Crash
@@ -372,6 +380,8 @@ function showNextPhrase(socket) {
 }
 
 function awardPhrase(socket) {
+    console.log('awarding phrase');
+
     let roomObj = getRoom(socket);  // Get the room that the client called from
     
     if (!roomObj) return // Prevent Crash
@@ -441,6 +451,12 @@ function sendMessage(socket, message) {
 
 function getPlayer(socket) {
     return PLAYER_LIST[socket.id];
+}
+
+function getRoom(socket) {
+    let player = getPlayer(socket);
+    if (!player) return;
+    return ROOM_LIST[player.roomName]
 }
 
 function emitToRoom(roomObj, emitMessage, data) {
