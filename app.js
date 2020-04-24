@@ -258,13 +258,14 @@ function deleteRoomIfEmpty(roomName) {
 
 function safelyRemovePlayerFromGame(player, roomObj) {
     console.log('removing player');
+    let game = roomObj.game;
     // check if the player was the active player on the active team
-    let activeTeam = roomObj.game[roomObj.game.activeTeam];     
+    let activeTeam = game[game.activeTeam];     
     if (activeTeam && activeTeam.playerIds[activeTeam.activePlayer] === player.id) {
-        roomObj.game.changeActivePlayer();
-        emitToRoom(roomObj, 'newActivePlayer', roomObj.game);
+        game.changeActivePlayer();
+        emitToRoom(roomObj, 'newActivePlayer', game);
     }
-    roomObj.game.removePlayer(player.id); // remove player from their team
+    game.removePlayer(player.id); // remove player from their team
     
     if (player.ready) {
         console.log("lowering ready count")
@@ -272,7 +273,7 @@ function safelyRemovePlayerFromGame(player, roomObj) {
         player.ready = false;   // toggle player ready
     }
 
-    if (roomObj.game.hasBegun && !roomObj.game.over) { // send game updates if the game 
+    if (game.hasBegun && !game.over) { // send game updates if the game 
         emitToRoom(roomObj, 'updateGame', roomObj);
     } else {
         emitToRoom(roomObj, "updateLobby", roomObj);
