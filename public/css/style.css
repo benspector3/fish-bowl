@@ -6,6 +6,7 @@ COLOR_LIGHT_BLUE: #80c5ff
 */
 
 body { padding: 10px 20px; background: lavender; }
+ol { margin-left: 1em; }
 button { min-width: 70px; min-height: 20px; padding: 5px; border-radius: 5px; }
 button.btn-small { min-width: fit-content; padding: 0px 3px;}
 button.unclickable { opacity: 0.5; }
