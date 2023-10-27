@@ -2,7 +2,7 @@
 
 Classic party game mixing up taboo, charades, and password made for the web using socket.io, express, and nodejs
 
-Play for free with your friends at [fishbowlparty.herokuapp.com](fishbowlparty.herokuapp.com).
+Play for free with your friends at https://fishbowl.onrender.com
 
 ## Create or Join a Game
 
