@@ -34,6 +34,6 @@ The third round is **Password** where the clue giver can use one word to describ
 
 ### Turns
 
-The game begins with one team being chosen randomly and one person on their team assigned to be the **clue giver** while the rest of the team are **guessers**. Once the phrase is guessed correctly the **clue giver** switches to the next player on their team.
+The game begins with one team being chosen randomly to play the round first. One person on their team is assigned to be the **clue giver** while the rest of the team are **guessers**. Once the phrase is guessed correctly,the next player on their team becomes the clue giver. After 90 seconds, teams will switch places. The round ends when all phrases have been guessed.
 
-Once the 90 seconds are up, teams will switch. The clock starts running once the first phrase is drawn during a team's turn and continues to run after the phrase is guessed correctly. Be ready to draw if you are next up!
+The clock starts running once the first phrase is drawn during a team's turn and continues to run after the phrase is guessed correctly. Be ready to draw if you are next up!
